@@ -85,50 +85,98 @@ struct ClaudeInstancesView: View {
 
     @ViewBuilder
     private func buddyCardView(_ buddy: BuddyInfo) -> some View {
-        VStack(spacing: 12) {
-            // Big emoji with bounce
-            Text(buddy.species.emoji)
-                .font(.system(size: 48))
-
-            // Name
-            Text(buddy.name)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.white)
-
-            // Species
-            Text(buddy.species.rawValue.capitalized)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.5))
-
-            // Personality — the best part
-            Text("\"" + buddy.personality + "\"")
-                .font(.system(size: 10))
-                .foregroundColor(.white.opacity(0.5))
-                .italic()
-                .multilineTextAlignment(.center)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 8) {
+                // Rarity + species header
+                HStack {
+                    Text(buddy.rarity.stars)
+                        .font(.system(size: 10))
+                        .foregroundColor(buddy.rarity.color)
+                    Text(buddy.rarity.displayName.uppercased())
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundColor(buddy.rarity.color)
+                    Spacer()
+                    Text(buddy.species.rawValue.uppercased())
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.4))
+                }
                 .padding(.horizontal, 12)
 
-            // Hint
-            Text("Type /buddy in Claude Code to interact")
-                .font(.system(size: 8))
-                .foregroundColor(.white.opacity(0.2))
+                // Emoji
+                Text(buddy.species.emoji)
+                    .font(.system(size: 36))
 
-            // Back button
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                    showBuddyCard = false
+                if buddy.isShiny {
+                    Text("✨ SHINY ✨")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.yellow)
                 }
-            } label: {
-                Text("Back")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.white.opacity(0.08)))
+
+                // Name
+                Text(buddy.name)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+
+                // Personality
+                Text("\"" + buddy.personality + "\"")
+                    .font(.system(size: 9))
+                    .foregroundColor(.white.opacity(0.4))
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 10)
+
+                // Stats bars
+                if buddy.stats.debugging > 0 {
+                    VStack(spacing: 3) {
+                        buddyStatBar("DEBUGGING", value: buddy.stats.debugging, color: .cyan)
+                        buddyStatBar("PATIENCE", value: buddy.stats.patience, color: .green)
+                        buddyStatBar("CHAOS", value: buddy.stats.chaos, color: .red)
+                        buddyStatBar("WISDOM", value: buddy.stats.wisdom, color: .purple)
+                        buddyStatBar("SNARK", value: buddy.stats.snark, color: .orange)
+                    }
+                    .padding(.horizontal, 8)
+                }
+
+                // Back
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        showBuddyCard = false
+                    }
+                } label: {
+                    Text("Back")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.white.opacity(0.08)))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+            .padding(.vertical, 8)
         }
-        .padding(.vertical, 12)
+    }
+
+    private func buddyStatBar(_ label: String, value: Int, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 7, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.35))
+                .frame(width: 58, alignment: .trailing)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.white.opacity(0.06))
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(color.opacity(0.6))
+                        .frame(width: geo.size.width * CGFloat(value) / 100.0)
+                }
+            }
+            .frame(height: 5)
+            Text("\(value)")
+                .font(.system(size: 7, design: .monospaced))
+                .foregroundColor(color.opacity(0.6))
+                .frame(width: 18, alignment: .leading)
+        }
     }
 
     // MARK: - Empty State
