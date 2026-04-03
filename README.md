@@ -6,6 +6,10 @@
 
 **Your AI agents live in the notch.**
 
+This is a passion project built purely out of personal interest. It is **free and open-source** with no commercial intentions whatsoever. I welcome everyone to try it out, report bugs, share it with your colleagues, and contribute code. Let's build something great together!
+
+这是一个纯粹出于个人兴趣开发的项目，**完全免费开源**，没有任何商业目的。欢迎大家试用、提 Bug、推荐给身边的同事使用，也欢迎贡献代码。一起把它做得更好！
+
 English | [中文](README.zh-CN.md)
 
 [![Website](https://img.shields.io/badge/website-xmqywx.github.io%2FCodeIsland-7c3aed?style=flat-square)](https://xmqywx.github.io/CodeIsland/)
@@ -176,6 +180,26 @@ xcodebuild -project ClaudeIsland.xcodeproj -scheme ClaudeIsland \
 ## i18n
 
 CodeIsland supports English and Chinese with automatic system locale detection. Override in Settings > Language.
+
+## Contributing
+
+Contributions are welcome! Here's how:
+
+1. **Report bugs** — [Open an issue](https://github.com/xmqywx/CodeIsland/issues) with steps to reproduce
+2. **Submit a PR** — Fork the repo, create a branch, make your changes, and open a Pull Request
+3. **Suggest features** — Open an issue tagged `enhancement`
+
+I will personally review and merge all PRs. Please keep changes focused and include a clear description.
+
+## 参与贡献
+
+欢迎参与！方式如下：
+
+1. **提交 Bug** — 在 [Issues](https://github.com/xmqywx/CodeIsland/issues) 中描述问题和复现步骤
+2. **提交 PR** — Fork 本仓库，新建分支，修改后提交 Pull Request
+3. **建议功能** — 在 Issues 中提出，标记为 `enhancement`
+
+我会亲自 Review 并合并所有 PR。请保持改动聚焦，附上清晰的说明。
 
 ## Credits
 
