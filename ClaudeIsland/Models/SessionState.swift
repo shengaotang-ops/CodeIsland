@@ -182,17 +182,23 @@ struct SessionState: Equatable, Identifiable, Sendable {
 
     /// Emergency fallback: read JSONL directly without going through ConversationParser
     private static func directParseFirstMessage(sessionId: String, cwd: String) -> String? {
-        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
-        let path = NSHomeDirectory() + "/.claude/projects/" + projectDir + "/" + sessionId + ".jsonl"
+        // Try exact cwd first, then walk up parent directories
+        var searchCwd = cwd
+        let projectsDir = NSHomeDirectory() + "/.claude/projects"
 
-        // Log path for debugging
-        let log = "directParse: sid=\(sessionId.prefix(8)) cwd=\(cwd) path=\(path) exists=\(FileManager.default.fileExists(atPath: path))\n"
-        let logPath = NSHomeDirectory() + "/.claude/.codeisland-direct.log"
-        if let d = log.data(using: .utf8) {
-            if let fh = FileHandle(forWritingAtPath: logPath) { fh.seekToEndOfFile(); fh.write(d); fh.closeFile() }
-            else { FileManager.default.createFile(atPath: logPath, contents: d) }
+        while !searchCwd.isEmpty && searchCwd != "/" {
+            let projectDir = searchCwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
+            let path = projectsDir + "/" + projectDir + "/" + sessionId + ".jsonl"
+            if FileManager.default.fileExists(atPath: path) {
+                return parseFirstUserMessage(from: path)
+            }
+            // Go up one directory
+            searchCwd = (searchCwd as NSString).deletingLastPathComponent
         }
+        return nil
+    }
 
+    private static func parseFirstUserMessage(from path: String) -> String? {
         guard let data = FileManager.default.contents(atPath: path),
               let content = String(data: data, encoding: .utf8) else { return nil }
 
