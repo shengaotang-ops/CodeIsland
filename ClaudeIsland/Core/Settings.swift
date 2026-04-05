@@ -31,6 +31,12 @@ enum NotificationSound: String, CaseIterable {
     }
 }
 
+/// Available UI modes
+enum UIMode: String {
+    case notch = "notch"
+    case floatingBuddy = "floatingBuddy"
+}
+
 enum AppSettings {
     private static let defaults = UserDefaults.standard
 
@@ -38,6 +44,20 @@ enum AppSettings {
 
     private enum Keys {
         static let notificationSound = "notificationSound"
+        static let uiMode = "uiMode"
+    }
+
+    // MARK: - UI Mode
+
+    /// The UI mode: notch-based or floating buddy
+    static var uiMode: UIMode {
+        get {
+            let raw = defaults.string(forKey: Keys.uiMode) ?? UIMode.notch.rawValue
+            return UIMode(rawValue: raw) ?? .notch
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Keys.uiMode)
+        }
     }
 
     // MARK: - Notification Sound
