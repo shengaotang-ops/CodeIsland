@@ -52,8 +52,8 @@ enum AppSettings {
     /// The UI mode: notch-based or floating buddy
     static var uiMode: UIMode {
         get {
-            let raw = defaults.string(forKey: Keys.uiMode) ?? UIMode.notch.rawValue
-            return UIMode(rawValue: raw) ?? .notch
+            let raw = defaults.string(forKey: Keys.uiMode) ?? UIMode.floatingBuddy.rawValue
+            return UIMode(rawValue: raw) ?? .floatingBuddy
         }
         set {
             defaults.set(newValue.rawValue, forKey: Keys.uiMode)
