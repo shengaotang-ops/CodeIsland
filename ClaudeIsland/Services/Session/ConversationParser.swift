@@ -535,7 +535,7 @@ actor ConversationParser {
 
         // Try cwd and each parent directory until we find the JSONL
         while dir.count > 1 {
-            let projectDir = dir.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
+            let projectDir = dir.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-").replacingOccurrences(of: "_", with: "-")
             let path = home + "/.claude/projects/" + projectDir + "/" + sessionId + ".jsonl"
             if fm.fileExists(atPath: path) {
                 return path
@@ -544,7 +544,7 @@ actor ConversationParser {
         }
 
         // Fallback to original cwd-based path
-        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
+        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-").replacingOccurrences(of: "_", with: "-")
         return home + "/.claude/projects/" + projectDir + "/" + sessionId + ".jsonl"
     }
 
@@ -972,7 +972,7 @@ actor ConversationParser {
     func parseSubagentTools(agentId: String, cwd: String) -> [SubagentToolInfo] {
         guard !agentId.isEmpty else { return [] }
 
-        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
+        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-").replacingOccurrences(of: "_", with: "-")
         let agentFile = NSHomeDirectory() + "/.claude/projects/" + projectDir + "/agent-" + agentId + ".jsonl"
 
         guard FileManager.default.fileExists(atPath: agentFile),
@@ -1064,7 +1064,7 @@ extension ConversationParser {
     nonisolated static func parseSubagentToolsSync(agentId: String, cwd: String) -> [SubagentToolInfo] {
         guard !agentId.isEmpty else { return [] }
 
-        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
+        let projectDir = cwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-").replacingOccurrences(of: "_", with: "-")
         let agentFile = NSHomeDirectory() + "/.claude/projects/" + projectDir + "/agent-" + agentId + ".jsonl"
 
         guard FileManager.default.fileExists(atPath: agentFile),

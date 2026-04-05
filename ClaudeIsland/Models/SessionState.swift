@@ -189,7 +189,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         let projectsDir = NSHomeDirectory() + "/.claude/projects"
 
         while !searchCwd.isEmpty && searchCwd != "/" {
-            let projectDir = searchCwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-")
+            let projectDir = searchCwd.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ".", with: "-").replacingOccurrences(of: "_", with: "-")
             let path = projectsDir + "/" + projectDir + "/" + sessionId + ".jsonl"
             if FileManager.default.fileExists(atPath: path) {
                 return parseFirstUserMessage(from: path)

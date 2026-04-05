@@ -59,9 +59,9 @@ struct TerminalVisibilityDetector {
             return isCmuxSessionActive(session)
         }
 
-        // iTerm2: check if current session name contains project dir
+        // iTerm2: check if current session's TTY matches, fall back to name
         if bundleId == "com.googlecode.iterm2" {
-            return isITermSessionActive(dirName: dirName)
+            return isITermSessionActive(pid: session.pid, dirName: dirName)
         }
 
         // Ghostty: check if current window title contains project dir
@@ -121,17 +121,45 @@ struct TerminalVisibilityDetector {
 
     // MARK: - iTerm2
 
-    private static func isITermSessionActive(dirName: String) -> Bool {
+    private static func isITermSessionActive(pid: Int?, dirName: String) -> Bool {
+        // Try TTY match first (reliable), fall back to name match
+        let matchCondition: String
+        if let pid = pid, let tty = ttyForPid(pid) {
+            matchCondition = "tty of current session of current tab of current window is \"\(tty)\""
+        } else {
+            matchCondition = "name of current session of current tab of current window contains \"\(dirName)\""
+        }
+
         let script = """
         tell application "iTerm2"
             try
-                set sessionName to name of current session of current tab of current window
-                if sessionName contains "\(dirName)" then return "true"
+                if \(matchCondition) then return "true"
             end try
             return "false"
         end tell
         """
         return runAppleScriptBool(script)
+    }
+
+    /// Get the TTY device path for a given PID
+    private static func ttyForPid(_ pid: Int) -> String? {
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/bin/ps")
+        process.arguments = ["-p", String(pid), "-o", "tty="]
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0,
+                  let tty = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !tty.isEmpty, tty != "??" else { return nil }
+            return "/dev/" + tty
+        } catch {
+            return nil
+        }
     }
 
     // MARK: - Ghostty
