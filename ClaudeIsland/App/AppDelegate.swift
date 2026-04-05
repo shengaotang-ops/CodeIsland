@@ -34,6 +34,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handleScreenChange() {
+        // Skip window recreation during jump cooldown — the `code` CLI triggers
+        // screen parameter changes that would recreate the notch and cause visual glitches
+        if Date().timeIntervalSince(TerminalJumper.lastJumpTime) < 5.0 {
+            DebugLogger.log("Screen", "didChangeScreenParameters — skipped (jump cooldown)")
+            return
+        }
+        DebugLogger.log("Screen", "didChangeScreenParameters — recreating window")
         _ = windowManager?.setupNotchWindow()
     }
 

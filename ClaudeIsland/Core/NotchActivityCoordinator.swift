@@ -64,6 +64,7 @@ class NotchActivityCoordinator: ObservableObject {
         value: CGFloat = 0,
         duration: TimeInterval = 0
     ) {
+        DebugLogger.log("Activity", "SHOW type=\(type)")
         activityDuration = duration
 
         withAnimation(.smooth) {
@@ -77,6 +78,7 @@ class NotchActivityCoordinator: ObservableObject {
 
     /// Hide the current activity
     func hideActivity() {
+        DebugLogger.log("Activity", "HIDE")
         withAnimation(.smooth) {
             expandingActivity = .empty
         }

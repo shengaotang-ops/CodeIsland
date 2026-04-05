@@ -399,11 +399,14 @@ struct NotchView: View {
     // MARK: - Event Handlers
 
     private func handleProcessingChange() {
+        // Skip activity changes during jump cooldown to prevent visual glitches
+        let recentJump = Date().timeIntervalSince(TerminalJumper.lastJumpTime) < 3.0
+        DebugLogger.log("Processing", "active=\(hasActiveSessions) processing=\(isAnyProcessing) pending=\(hasPendingPermission) recentJump=\(recentJump)")
         if hasActiveSessions {
             // Show notch whenever there are active sessions
-            if isAnyProcessing || hasPendingPermission {
+            if !recentJump && (isAnyProcessing || hasPendingPermission) {
                 activityCoordinator.showActivity(type: .claude)
-            } else {
+            } else if !recentJump {
                 activityCoordinator.hideActivity()
             }
             isVisible = true
@@ -464,8 +467,9 @@ struct NotchView: View {
             if allFocused {
                 DebugLogger.log("Suppress", "[pending] Suppressed — all sessions focused")
             } else {
-                DebugLogger.log("Suppress", "[pending] Opening notification")
-                viewModel.notchOpen(reason: .notification)
+                // Don't open here — let the waitingForInput handler open with chat content
+                // to avoid a double expand (empty open + content open)
+                DebugLogger.log("Suppress", "[pending] Deferring to waitingForInput handler")
             }
         }
 
