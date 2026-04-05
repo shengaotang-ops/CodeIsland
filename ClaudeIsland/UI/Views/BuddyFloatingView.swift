@@ -57,20 +57,22 @@ struct BuddyFloatingView: View {
         }
     }
 
+    @State private var dragStartPosition: CGPoint = .zero
+
     private var dragGesture: some Gesture {
         DragGesture()
             .onChanged { value in
-                isDragging = true
-                dragOffset = value.translation
+                if !isDragging {
+                    isDragging = true
+                    dragStartPosition = viewModel.position
+                }
                 viewModel.position = CGPoint(
-                    x: viewModel.position.x + value.translation.width,
-                    y: viewModel.position.y - value.translation.height // macOS Y is flipped
+                    x: dragStartPosition.x + value.translation.width,
+                    y: dragStartPosition.y - value.translation.height // macOS Y is flipped
                 )
-                dragOffset = .zero
             }
             .onEnded { _ in
-                // Delay resetting isDragging so the tap doesn't fire
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     isDragging = false
                 }
             }
