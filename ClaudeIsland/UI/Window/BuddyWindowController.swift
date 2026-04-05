@@ -13,6 +13,7 @@ class BuddyWindowController: NSWindowController {
     let viewModel: BuddyPanelViewModel
     private var cancellables = Set<AnyCancellable>()
     private var clickMonitor: Any?
+    private var lastExpandTime: Date = .distantPast
 
     init() {
         let sessionMonitor = ClaudeSessionMonitor()
@@ -58,6 +59,9 @@ class BuddyWindowController: NSWindowController {
         vm.$isExpanded
             .receive(on: DispatchQueue.main)
             .sink { [weak self] expanded in
+                if expanded {
+                    self?.lastExpandTime = Date()
+                }
                 self?.updateWindowSize(expanded: expanded)
             }
             .store(in: &cancellables)
@@ -65,6 +69,8 @@ class BuddyWindowController: NSWindowController {
         // Monitor clicks outside to dismiss panel
         clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
             guard let self = self, self.viewModel.isExpanded else { return }
+            // Ignore clicks within 0.5s of expanding (the click that opened the panel)
+            guard Date().timeIntervalSince(self.lastExpandTime) > 0.5 else { return }
             guard let window = self.window else { return }
 
             let screenLocation = NSEvent.mouseLocation
