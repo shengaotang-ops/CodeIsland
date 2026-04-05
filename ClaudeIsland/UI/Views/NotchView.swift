@@ -448,11 +448,21 @@ struct NotchView: View {
 
         if !newPendingIds.isEmpty &&
            viewModel.status == .closed {
-            // Smart suppression: don't expand if user's terminal is frontmost
-            let termFront = TerminalVisibilityDetector.isTerminalFrontmost()
-            DebugLogger.log("Suppress", "[pending] newIds=\(newPendingIds.count) termFront=\(termFront)")
-            if smartSuppression && termFront {
-                DebugLogger.log("Suppress", "[pending] Suppressed — terminal frontmost")
+            // Suppress briefly after a jump to avoid double popup
+            if Date().timeIntervalSince(TerminalJumper.lastJumpTime) < 3.0 {
+                DebugLogger.log("Suppress", "[pending] Suppressed — recent jump cooldown")
+                previousPendingIds = currentIds
+                return
+            }
+
+            // Smart suppression: only suppress for sessions the user is looking at
+            let newPendingSessions = sessions.filter { newPendingIds.contains($0.stableId) }
+            let allFocused = smartSuppression && newPendingSessions.allSatisfy { session in
+                TerminalVisibilityDetector.isSessionTerminalFrontmost(session)
+            }
+            DebugLogger.log("Suppress", "[pending] newIds=\(newPendingIds.count) allFocused=\(allFocused)")
+            if allFocused {
+                DebugLogger.log("Suppress", "[pending] Suppressed — all sessions focused")
             } else {
                 DebugLogger.log("Suppress", "[pending] Opening notification")
                 viewModel.notchOpen(reason: .notification)
@@ -484,12 +494,21 @@ struct NotchView: View {
         if !newWaitingIds.isEmpty {
             let newlyWaitingSessions = waitingForInputSessions.filter { newWaitingIds.contains($0.stableId) }
 
-            // Check focus first — suppress all notifications if user is in a terminal
-            let termFront = TerminalVisibilityDetector.isTerminalFrontmost()
-            DebugLogger.log("Suppress", "[waitingForInput] termFront=\(termFront) sessions=\(newlyWaitingSessions.map { $0.projectName })")
+            // Suppress briefly after a jump to avoid double popup
+            let recentJump = Date().timeIntervalSince(TerminalJumper.lastJumpTime) < 3.0
+            if recentJump {
+                DebugLogger.log("Suppress", "[waitingForInput] Suppressed — recent jump cooldown")
+            }
 
-            if termFront {
-                DebugLogger.log("Suppress", "[waitingForInput] Suppressed — terminal frontmost")
+            // Check focus per-session — only suppress for sessions the user is actively looking at
+            let unfocusedSessions = newlyWaitingSessions.filter { session in
+                let isFront = TerminalVisibilityDetector.isSessionTerminalFrontmost(session)
+                DebugLogger.log("Suppress", "[waitingForInput] session=\(session.projectName) isFront=\(isFront) termApp=\(session.terminalApp ?? "nil")")
+                return !isFront
+            }
+
+            if recentJump || unfocusedSessions.isEmpty {
+                DebugLogger.log("Suppress", "[waitingForInput] Suppressed")
             } else {
                 // Play notification sound
                 if let soundName = AppSettings.notificationSound.soundName {
