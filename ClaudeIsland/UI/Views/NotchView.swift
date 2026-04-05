@@ -139,7 +139,7 @@ struct NotchView: View {
     /// Extra width for expanding activities (like Dynamic Island)
     /// Just enough to show status on left wing and count on right wing
     private var expansionWidth: CGFloat {
-        if hasActiveSessions {
+        if isAnyProcessing || hasPendingPermission {
             return 240
         }
         return 0
@@ -224,7 +224,15 @@ struct NotchView: View {
                     .animation(.smooth, value: activityCoordinator.expandingActivity)
                     .animation(.smooth, value: hasActiveSessions)
                     .animation(.spring(response: 0.3, dampingFraction: 0.5), value: isBouncing)
-                    .contentShape(Rectangle())
+                    .contentShape(
+                        // When closed, only the physical notch area receives clicks/hovers
+                        // so expanded wings don't block menu bar icons
+                        Rectangle().size(
+                            width: viewModel.status == .opened ? notchSize.width + 40 : closedNotchSize.width + 40,
+                            height: viewModel.status == .opened ? notchSize.height : closedNotchSize.height
+                        ),
+                        eoFill: false
+                    )
                     .onHover { hovering in
                         withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
                             isHovering = hovering
@@ -404,10 +412,21 @@ struct NotchView: View {
         DebugLogger.log("Processing", "active=\(hasActiveSessions) processing=\(isAnyProcessing) pending=\(hasPendingPermission) recentJump=\(recentJump)")
         if hasActiveSessions {
             // Show notch whenever there are active sessions
-            if !recentJump && (isAnyProcessing || hasPendingPermission) {
-                activityCoordinator.showActivity(type: .claude)
-            } else if !recentJump {
+            if isAnyProcessing || hasPendingPermission {
+                if !recentJump {
+                    activityCoordinator.showActivity(type: .claude)
+                }
+            } else if viewModel.status == .opened {
+                // Notch is open — hide activity immediately
                 activityCoordinator.hideActivity()
+            } else {
+                // Notch is closed — delay hide so the activity stays visible
+                // while the notification popup loads (prevents collapse→expand flicker)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [self] in
+                    if !isAnyProcessing && !hasPendingPermission && viewModel.status != .opened {
+                        activityCoordinator.hideActivity()
+                    }
+                }
             }
             isVisible = true
         } else {
