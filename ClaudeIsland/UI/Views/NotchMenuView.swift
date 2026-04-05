@@ -139,57 +139,7 @@ struct NotchMenuView: View {
 
                     AccessibilityRow(isEnabled: AXIsProcessTrusted())
 
-                    // Star & Feedback
-                    HStack(spacing: 6) {
-                        Button {
-                            NSWorkspace.shared.open(URL(string: "https://github.com/xmqywx/CodeIsland")!)
-                        } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "star.fill").font(.system(size: 9)).foregroundColor(.yellow)
-                                Text("Star").font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.7))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.yellow.opacity(0.08)).overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.yellow.opacity(0.15), lineWidth: 0.5)))
-                        }
-                        .buttonStyle(.plain)
-
-                        Button {
-                            NSWorkspace.shared.open(URL(string: "https://github.com/xmqywx/CodeIsland/issues")!)
-                        } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "bubble.left").font(.system(size: 9)).foregroundColor(.white.opacity(0.4))
-                                Text(L10n.tr("Feedback", "反馈")).font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.7))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 5)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.05)))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 4)
-                    .padding(.top, 6)
-
                     VersionRow()
-
-                    // WeChat contact
-                    HStack(spacing: 4) {
-                        Text(L10n.tr("WeChat", "微信"))
-                            .font(.system(size: 8))
-                            .foregroundColor(.white.opacity(0.2))
-                        Text("A115939")
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.3))
-                            .textSelection(.enabled)
-                    }
-                    .padding(.top, 4)
-
-                    Text(L10n.tr("Actively maintained · Your star keeps us going!\nHave ideas? Tap Feedback — we'd love to hear from you!", "持续更新中 · Star 是我们最大的动力！\n有好的想法？点击反馈告诉我们，期待下个版本见！"))
-                        .font(.system(size: 8))
-                        .foregroundColor(.white.opacity(0.15))
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 2)
                 }
                 .padding(.horizontal, 4)
                 .padding(.bottom, 8)

@@ -121,8 +121,8 @@ class RateLimitMonitor: ObservableObject {
 
     /// Read OAuth token from macOS Keychain and call Anthropic usage API
     private func fetchFromAPI() async -> RateLimitDisplayInfo? {
-        // Read token from Keychain
-        guard let token = readOAuthToken() else {
+        // Read token from Keychain (runs on background thread)
+        guard let token = await readOAuthToken() else {
             DebugLogger.log("RateLimit", "No OAuth token found")
             return nil
         }
@@ -170,27 +170,36 @@ class RateLimitMonitor: ObservableObject {
         }
     }
 
-    /// Read OAuth access token from macOS Keychain
-    private func readOAuthToken() -> String? {
-        let process = Process()
-        let pipe = Pipe()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-w"]
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
+    /// Read OAuth access token from macOS Keychain.
+    /// Runs the security command on a background thread to avoid blocking the main thread
+    /// (Process.waitUntilExit triggers constraint updates that crash when called from @MainActor).
+    private func readOAuthToken() async -> String? {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let process = Process()
+                let pipe = Pipe()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+                process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-w"]
+                process.standardOutput = pipe
+                process.standardError = FileHandle.nullDevice
 
-        do {
-            try process.run()
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
-            guard process.terminationStatus == 0,
-                  let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  let json = try? JSONSerialization.jsonObject(with: Data(output.utf8)) as? [String: Any],
-                  let oauth = json["claudeAiOauth"] as? [String: Any],
-                  let token = oauth["accessToken"] as? String else { return nil }
-            return token
-        } catch {
-            return nil
+                do {
+                    try process.run()
+                    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                    process.waitUntilExit()
+                    guard process.terminationStatus == 0,
+                          let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                          let json = try? JSONSerialization.jsonObject(with: Data(output.utf8)) as? [String: Any],
+                          let oauth = json["claudeAiOauth"] as? [String: Any],
+                          let token = oauth["accessToken"] as? String else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    continuation.resume(returning: token)
+                } catch {
+                    continuation.resume(returning: nil)
+                }
+            }
         }
     }
 }

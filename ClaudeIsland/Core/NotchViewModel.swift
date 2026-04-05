@@ -115,15 +115,17 @@ class NotchViewModel: ObservableObject {
 
     // MARK: - Initialization
 
-    init(deviceNotchRect: CGRect, screenRect: CGRect, windowHeight: CGFloat, hasPhysicalNotch: Bool) {
+    init(deviceNotchRect: CGRect, screenRect: CGRect, windowHeight: CGFloat, hasPhysicalNotch: Bool, handleEvents: Bool = true) {
         self.geometry = NotchGeometry(
             deviceNotchRect: deviceNotchRect,
             screenRect: screenRect,
             windowHeight: windowHeight
         )
         self.hasPhysicalNotch = hasPhysicalNotch
-        setupEventHandlers()
-        observeSelectors()
+        if handleEvents {
+            setupEventHandlers()
+            observeSelectors()
+        }
     }
 
     private func observeSelectors() {

@@ -30,11 +30,13 @@ enum BuddyGlowState: Equatable {
 
 enum BuddyPanelContent: Equatable {
     case instances
+    case menu
     case chat(SessionState)
 
     static func == (lhs: BuddyPanelContent, rhs: BuddyPanelContent) -> Bool {
         switch (lhs, rhs) {
         case (.instances, .instances): return true
+        case (.menu, .menu): return true
         case (.chat(let a), .chat(let b)): return a.sessionId == b.sessionId
         default: return false
         }
@@ -53,6 +55,23 @@ class BuddyPanelViewModel: ObservableObject {
         didSet { savePosition() }
     }
 
+    /// Set position without triggering the $position Combine publisher.
+    /// Used during drag for direct window movement (bypasses Combine for zero-lag drag).
+    var positionSilent: CGPoint {
+        get { position }
+        set {
+            // Directly update backing storage without triggering @Published
+            let key = Self.positionXKey
+            UserDefaults.standard.set(newValue.x, forKey: key)
+            UserDefaults.standard.set(newValue.y, forKey: Self.positionYKey)
+            // Use withMutation to avoid triggering SwiftUI re-render during drag
+            position = newValue
+        }
+    }
+
+    /// Callback for direct window movement during drag (set by window controller)
+    var moveWindow: ((CGPoint) -> Void)?
+
     // MARK: - Session monitor
     private var cancellables = Set<AnyCancellable>()
     let sessionMonitor: ClaudeSessionMonitor
@@ -61,11 +80,52 @@ class BuddyPanelViewModel: ObservableObject {
     var panelSize: CGSize {
         switch contentType {
         case .instances: return CGSize(width: 320, height: 400)
+        case .menu: return CGSize(width: 320, height: 440)
         case .chat: return CGSize(width: 360, height: 500)
         }
     }
 
-    static let buddySize: CGFloat = 48
+    static let buddySize: CGFloat = 96
+
+    /// A NotchViewModel that child views (ClaudeInstancesView, ChatView) can bind to.
+    /// Actions on it are forwarded back to this BuddyPanelViewModel.
+    lazy var notchBridge: NotchViewModel = {
+        let vm = NotchViewModel(
+            deviceNotchRect: .zero,
+            screenRect: NSScreen.main?.frame ?? .zero,
+            windowHeight: 500,
+            hasPhysicalNotch: false,
+            handleEvents: false
+        )
+        // Keep it permanently opened so child views render content
+        vm.status = .opened
+
+        // Forward NotchViewModel contentType changes → BuddyPanelViewModel
+        vm.$contentType
+            .dropFirst() // skip initial value
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] contentType in
+                guard let self = self, !self.isSyncingBridge else { return }
+                self.isSyncingBridge = true
+                defer { self.isSyncingBridge = false }
+                switch contentType {
+                case .chat(let session):
+                    self.showChat(for: session)
+                case .instances:
+                    if self.contentType != .instances {
+                        self.contentType = .instances
+                    }
+                case .menu:
+                    self.contentType = .menu
+                }
+            }
+            .store(in: &cancellables)
+
+        return vm
+    }()
+
+    /// Prevents infinite loops during bridge sync
+    private var isSyncingBridge = false
 
     init(sessionMonitor: ClaudeSessionMonitor) {
         self.sessionMonitor = sessionMonitor
@@ -92,7 +152,12 @@ class BuddyPanelViewModel: ObservableObject {
         }
     }
 
+    /// Set by expand() so the window controller can debounce the click-outside monitor.
+    /// Must be set synchronously (not via Combine sink) to beat the global event monitor.
+    var lastExpandTime: Date = .distantPast
+
     func expand() {
+        lastExpandTime = Date()
         isExpanded = true
         contentType = .instances
     }
@@ -100,14 +165,32 @@ class BuddyPanelViewModel: ObservableObject {
     func collapse() {
         isExpanded = false
         contentType = .instances
+        syncBridgeContentType()
     }
 
     func showChat(for session: SessionState) {
         contentType = .chat(session)
+        syncBridgeContentType()
     }
 
     func exitChat() {
         contentType = .instances
+        syncBridgeContentType()
+    }
+
+    /// Push contentType to the notch bridge (skipped if the bridge triggered the change)
+    func syncBridgeContentType() {
+        guard !isSyncingBridge else { return }
+        isSyncingBridge = true
+        defer { isSyncingBridge = false }
+        switch contentType {
+        case .instances:
+            notchBridge.contentType = .instances
+        case .menu:
+            notchBridge.contentType = .menu
+        case .chat(let session):
+            notchBridge.contentType = .chat(session)
+        }
     }
 
     // MARK: - Glow State

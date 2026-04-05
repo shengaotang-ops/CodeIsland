@@ -489,6 +489,10 @@ struct BuddyASCIIView: View {
     /// When true, hearts float above the sprite.
     var isPetting: Bool = false
 
+    /// Whether to show the buddy name below the sprite (default true).
+    var showName: Bool = true
+
+
     @State private var tick: Int = 0
     @State private var petTick: Int = 0
 
@@ -512,10 +516,12 @@ struct BuddyASCIIView: View {
             }
 
             // Name below the sprite
-            Text(buddy.name)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .foregroundColor(buddy.rarity.color)
-                .padding(.top, 2)
+            if showName {
+                Text(buddy.name)
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundColor(buddy.rarity.color)
+                    .padding(.top, 2)
+            }
         }
         .onReceive(timer) { _ in
             tick += 1
@@ -524,6 +530,8 @@ struct BuddyASCIIView: View {
             }
         }
     }
+
+    // MARK: - Body Fill
 
     // MARK: - Rendering
 

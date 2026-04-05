@@ -2,7 +2,7 @@
 //  BuddyFloatingView.swift
 //  ClaudeIsland
 //
-//  The 48x48 floating buddy widget with drag support
+//  The floating buddy widget with drag support
 //
 
 import SwiftUI
@@ -11,53 +11,48 @@ struct BuddyFloatingView: View {
     @ObservedObject var viewModel: BuddyPanelViewModel
     @ObservedObject var buddyReader: BuddyReader
 
-    @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
+    @State private var dragStartPosition: CGPoint = .zero
 
     private let size: CGFloat = BuddyPanelViewModel.buddySize
 
-    var body: some View {
-        ZStack {
-            // Glow ring
-            BuddyGlowRing(glowState: viewModel.glowState, size: size + 8)
+    /// Color tint based on session state — applied to the buddy ASCII art itself
+    private var glowColor: Color? {
+        switch viewModel.glowState {
+        case .idle: return nil
+        case .processing: return Color(red: 0.29, green: 0.87, blue: 0.5)
+        case .needsInput: return Color(red: 0.98, green: 0.75, blue: 0.15)
+        case .needsApproval: return Color(red: 0.97, green: 0.44, blue: 0.44)
+        }
+    }
 
-            // Buddy content
-            buddyContent
-                .frame(width: size, height: size)
-                .clipShape(Circle())
-                .background(
-                    Circle()
-                        .fill(Color.black.opacity(0.8))
-                )
-        }
-        .frame(width: size + 12, height: size + 12)
-        .contentShape(Circle())
-        .gesture(dragGesture)
-        .onTapGesture {
-            if !isDragging {
-                viewModel.toggle()
+    var body: some View {
+        buddyContent
+            .frame(width: size + 12, height: size + 12)
+            .contentShape(Rectangle())
+            .gesture(dragGesture)
+            .onTapGesture {
+                if !isDragging {
+                    viewModel.toggle()
+                }
             }
-        }
     }
 
     @ViewBuilder
     private var buddyContent: some View {
         if let buddy = buddyReader.buddy {
-            // Use emoji view at 48x48 — matches EmojiPixelView's canvasSize
-            EmojiPixelView(
-                emoji: buddy.species.emoji,
-                style: viewModel.glowState == .processing ? .wave : .rock
-            )
-            .scaleEffect(0.9)
+            BuddyASCIIView(buddy: buddy, showName: false)
+                .fixedSize()
+                .brightness(0.3)
+                .colorMultiply(glowColor ?? buddy.rarity.color)
+                .shadow(color: (glowColor ?? .clear).opacity(0.5), radius: glowColor != nil ? 4 : 0)
+                .scaleEffect(1.1)
         } else {
-            // Fallback: simple icon
             Image(systemName: "person.circle.fill")
                 .font(.system(size: 24))
                 .foregroundColor(.white.opacity(0.5))
         }
     }
-
-    @State private var dragStartPosition: CGPoint = .zero
 
     private var dragGesture: some Gesture {
         DragGesture()
@@ -66,10 +61,12 @@ struct BuddyFloatingView: View {
                     isDragging = true
                     dragStartPosition = viewModel.position
                 }
-                viewModel.position = CGPoint(
+                let newPos = CGPoint(
                     x: dragStartPosition.x + value.translation.width,
-                    y: dragStartPosition.y - value.translation.height // macOS Y is flipped
+                    y: dragStartPosition.y - value.translation.height
                 )
+                viewModel.moveWindow?(newPos)
+                viewModel.positionSilent = newPos
             }
             .onEnded { _ in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {

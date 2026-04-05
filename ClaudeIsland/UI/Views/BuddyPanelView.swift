@@ -5,7 +5,6 @@
 //  Expanded panel shown when clicking the floating buddy
 //
 
-import Combine
 import SwiftUI
 
 struct BuddyPanelView: View {
@@ -19,36 +18,43 @@ struct BuddyPanelView: View {
             Divider()
                 .background(Color.white.opacity(0.1))
 
-            // Content
+            // Content — child views bind to the notch bridge owned by viewModel
             switch viewModel.contentType {
             case .instances:
                 ClaudeInstancesView(
                     sessionMonitor: viewModel.sessionMonitor,
-                    viewModel: panelBridge
+                    viewModel: viewModel.notchBridge
                 )
+            case .menu:
+                NotchMenuView(viewModel: viewModel.notchBridge)
             case .chat(let session):
                 ChatView(
                     sessionId: session.sessionId,
                     initialSession: session,
                     sessionMonitor: viewModel.sessionMonitor,
-                    viewModel: panelBridge
+                    viewModel: viewModel.notchBridge
                 )
             }
         }
         .frame(width: viewModel.panelSize.width, height: viewModel.panelSize.height)
-        .background(
-            VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                )
+        }
         .shadow(color: .black.opacity(0.4), radius: 12)
     }
 
     private var panelHeader: some View {
         HStack {
-            if case .chat = viewModel.contentType {
+            if viewModel.contentType != .instances {
                 Button {
                     withAnimation(.spring(response: 0.25)) {
-                        viewModel.exitChat()
+                        viewModel.contentType = .instances
+                        viewModel.syncBridgeContentType()
                     }
                 } label: {
                     HStack(spacing: 4) {
@@ -81,13 +87,6 @@ struct BuddyPanelView: View {
         .padding(.vertical, 8)
     }
 
-    // Bridge to reuse existing views that expect NotchViewModel
-    private var panelBridge: NotchViewModel {
-        // We need a lightweight bridge — existing views use NotchViewModel
-        // for showChat/exitChat. We'll create a shared bridge instance.
-        BuddyNotchBridge.shared.buddyViewModel = viewModel
-        return BuddyNotchBridge.shared.notchViewModel
-    }
 }
 
 // MARK: - Visual Effect Background
@@ -108,56 +107,4 @@ struct VisualEffectBackground: NSViewRepresentable {
         nsView.material = material
         nsView.blendingMode = blendingMode
     }
-}
-
-// MARK: - Bridge between BuddyPanelViewModel and NotchViewModel
-
-/// Bridges BuddyPanelViewModel actions to NotchViewModel interface
-/// so existing ClaudeInstancesView and ChatView work without modification.
-///
-/// The bridge creates a NotchViewModel and keeps it in "opened" state so
-/// child views render their content. Actions like showChat/exitChat on the
-/// bridge NotchViewModel are observed and forwarded to BuddyPanelViewModel.
-@MainActor
-class BuddyNotchBridge {
-    static let shared = BuddyNotchBridge()
-    weak var buddyViewModel: BuddyPanelViewModel?
-
-    private var cancellables = Set<AnyCancellable>()
-
-    lazy var notchViewModel: NotchViewModel = {
-        // Create a minimal NotchViewModel with dummy geometry
-        let vm = NotchViewModel(
-            deviceNotchRect: .zero,
-            screenRect: NSScreen.main?.frame ?? .zero,
-            windowHeight: 500,
-            hasPhysicalNotch: false
-        )
-        // Keep it in opened state so child views render content
-        vm.status = .opened
-
-        // Forward contentType changes back to buddyViewModel
-        vm.$contentType
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] contentType in
-                guard let buddy = self?.buddyViewModel else { return }
-                switch contentType {
-                case .chat(let session):
-                    buddy.showChat(for: session)
-                case .instances:
-                    // Only forward if buddy is currently showing chat
-                    // (avoids loops when buddy sets instances itself)
-                    if case .chat = buddy.contentType {
-                        buddy.exitChat()
-                    }
-                case .menu:
-                    break // Buddy panel doesn't support menu
-                }
-            }
-            .store(in: &cancellables)
-
-        return vm
-    }()
-
-    private init() {}
 }
