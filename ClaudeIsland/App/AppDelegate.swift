@@ -26,7 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.setActivationPolicy(.accessory)
 
         windowManager = WindowManager()
-        _ = windowManager?.setupNotchWindow()
+        windowManager?.setupWindow()
 
         screenObserver = ScreenObserver { [weak self] in
             self?.handleScreenChange()
@@ -40,8 +40,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             DebugLogger.log("Screen", "didChangeScreenParameters — skipped (jump cooldown)")
             return
         }
-        DebugLogger.log("Screen", "didChangeScreenParameters — recreating window")
-        _ = windowManager?.setupNotchWindow()
+        // Only recreate window for notch mode (buddy doesn't depend on screen)
+        if AppSettings.uiMode == .notch {
+            DebugLogger.log("Screen", "didChangeScreenParameters — recreating window")
+            _ = windowManager?.setupNotchWindow()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
