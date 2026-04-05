@@ -243,6 +243,7 @@ class NotchViewModel: ObservableObject {
     var shouldActivateOnOpen: Bool = false
 
     func notchOpen(reason: NotchOpenReason = .unknown) {
+        DebugLogger.log("Notch", "OPEN reason=\(reason) status=\(status)")
         openReason = reason
         // Only steal focus when user explicitly clicked
         shouldActivateOnOpen = (reason == .click)
@@ -265,6 +266,7 @@ class NotchViewModel: ObservableObject {
     }
 
     func notchClose() {
+        DebugLogger.log("Notch", "CLOSE status=\(status)")
         // Save chat session before closing if in chat mode
         if case .chat(let session) = contentType {
             currentChatSession = session
@@ -303,6 +305,8 @@ class NotchViewModel: ObservableObject {
 
     /// Perform boot animation: expand briefly then collapse
     func performBootAnimation() {
+        // Skip boot animation if triggered by a screen change after a recent jump
+        if Date().timeIntervalSince(TerminalJumper.lastJumpTime) < 5.0 { return }
         notchOpen(reason: .boot)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self, self.openReason == .boot else { return }

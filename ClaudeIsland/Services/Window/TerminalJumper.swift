@@ -12,11 +12,15 @@ import Foundation
 actor TerminalJumper {
     static let shared = TerminalJumper()
 
+    /// Timestamp of the last jump — used to suppress notifications briefly after jumping
+    @MainActor static var lastJumpTime: Date = .distantPast
+
     private init() {}
 
     /// Jump to the terminal hosting the given session.
     /// Tries strategies in order: tmux+Yabai → AppleScript → generic activate.
     func jump(to session: SessionState) async -> Bool {
+        await MainActor.run { Self.lastJumpTime = Date() }
         let cwd = session.cwd
         let pid = session.pid
         let terminalApp = session.terminalApp ?? ""

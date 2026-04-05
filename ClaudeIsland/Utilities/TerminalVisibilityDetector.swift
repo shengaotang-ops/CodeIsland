@@ -74,6 +74,14 @@ struct TerminalVisibilityDetector {
             return isTerminalAppSessionActive(dirName: dirName)
         }
 
+        // VS Code / Cursor: check if frontmost window title contains project dir
+        if bundleId == "com.microsoft.VSCode" || bundleId == "com.microsoft.VSCodeInsiders" {
+            return isVSCodeSessionActive(processName: "Code", dirName: dirName)
+        }
+        if bundleId == "com.todesktop.230313mzl4w4u92" {
+            return isVSCodeSessionActive(processName: "Cursor", dirName: dirName)
+        }
+
         // Other terminals: terminal frontmost = assume session visible
         return true
     }
@@ -160,6 +168,23 @@ struct TerminalVisibilityDetector {
         } catch {
             return nil
         }
+    }
+
+    // MARK: - VS Code / Cursor
+
+    private static func isVSCodeSessionActive(processName: String, dirName: String) -> Bool {
+        let script = """
+        tell application "System Events"
+            tell process "\(processName)"
+                try
+                    set winTitle to name of front window
+                    if winTitle contains "\(dirName)" then return "true"
+                end try
+            end tell
+        end tell
+        return "false"
+        """
+        return runAppleScriptBool(script)
     }
 
     // MARK: - Ghostty
