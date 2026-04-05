@@ -480,69 +480,67 @@ struct NotchView: View {
             waitingForInputTimestamps.removeValue(forKey: staleId)
         }
 
-        // Bounce the notch when a session newly enters waitingForInput state
+        // Notify the user when a session newly enters waitingForInput state
         if !newWaitingIds.isEmpty {
-            // Get the sessions that just entered waitingForInput
             let newlyWaitingSessions = waitingForInputSessions.filter { newWaitingIds.contains($0.stableId) }
 
-            // Play notification sound if the session is not actively focused
-            if let soundName = AppSettings.notificationSound.soundName {
-                // Check if we should play sound (async check for tmux pane focus)
-                Task {
-                    let shouldPlaySound = await shouldPlayNotificationSound(for: newlyWaitingSessions)
-                    if shouldPlaySound {
-                        await MainActor.run {
-                            NSSound(named: soundName)?.play()
+            // Check focus first — suppress all notifications if user is in a terminal
+            let termFront = TerminalVisibilityDetector.isTerminalFrontmost()
+            DebugLogger.log("Suppress", "[waitingForInput] termFront=\(termFront) sessions=\(newlyWaitingSessions.map { $0.projectName })")
+
+            if termFront {
+                DebugLogger.log("Suppress", "[waitingForInput] Suppressed — terminal frontmost")
+            } else {
+                // Play notification sound
+                if let soundName = AppSettings.notificationSound.soundName {
+                    NSSound(named: soundName)?.play()
+                }
+
+                // Trigger bounce animation
+                DispatchQueue.main.async {
+                    isBouncing = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        isBouncing = false
+                    }
+                }
+
+                // Auto-popup: if an unfocused session transitioned FROM processing/compacting TO waitingForInput,
+                // expand the notch and show that session's chat after a 1-second delay
+                let sessionsFromWorkingState = newlyWaitingSessions.filter { session in
+                    guard let prevPhase = previousPhases[session.stableId] else { return false }
+                    return prevPhase == .processing || prevPhase == .compacting
+                }
+
+                if !sessionsFromWorkingState.isEmpty {
+                    let completedSession = sessionsFromWorkingState[0]
+                    Task { [self] in
+                        // Force full re-parse of conversation to get text messages
+                        await ChatHistoryManager.shared.forceReloadFromFile(
+                            sessionId: completedSession.sessionId,
+                            cwd: completedSession.cwd
+                        )
+
+                        // Wait ~1 second before showing
+                        try? await Task.sleep(for: .seconds(1))
+
+                        guard sessionMonitor.instances.contains(where: {
+                            $0.stableId == completedSession.stableId && $0.phase == .waitingForInput
+                        }) else { return }
+
+                        if let currentSession = sessionMonitor.instances.first(where: {
+                            $0.stableId == completedSession.stableId
+                        }) {
+                            let chatItems = ChatHistoryManager.shared.history(for: currentSession.sessionId)
+                            DebugLogger.log("Suppress", "Opening notification popup for \(completedSession.projectName) chatItems=\(chatItems.count)")
+                            viewModel.notchOpen(reason: .notification)
+                            viewModel.showChat(for: currentSession)
                         }
-                    }
-                }
-            }
-
-            // Trigger bounce animation to get user's attention
-            DispatchQueue.main.async {
-                isBouncing = true
-                // Bounce back after a short delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    isBouncing = false
-                }
-            }
-
-            // Auto-popup: if a session transitioned FROM processing/compacting TO waitingForInput,
-            // expand the notch and show that session's chat after a 1-second delay
-            let sessionsFromWorkingState = newlyWaitingSessions.filter { session in
-                guard let prevPhase = previousPhases[session.stableId] else { return false }
-                return prevPhase == .processing || prevPhase == .compacting
-            }
-
-            if !sessionsFromWorkingState.isEmpty && viewModel.status == .closed {
-                let completedSession = sessionsFromWorkingState[0]
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
-                    guard viewModel.status == .closed else { return }
-                    guard sessionMonitor.instances.contains(where: {
-                        $0.stableId == completedSession.stableId && $0.phase == .waitingForInput
-                    }) else { return }
-
-                    // Suppress if the session's terminal is frontmost
-                    let isFront = TerminalVisibilityDetector.isSessionTerminalFrontmost(completedSession)
-                    DebugLogger.log("Suppress", "session=\(completedSession.projectName) isFront=\(isFront) termApp=\(completedSession.terminalApp ?? "nil")")
-                    if isFront {
-                        DebugLogger.log("Suppress", "Suppressed — user is looking at terminal")
-                        return
-                    }
-
-                    DebugLogger.log("Suppress", "Opening notification popup")
-                    viewModel.notchOpen(reason: .notification)
-                    if let currentSession = sessionMonitor.instances.first(where: {
-                        $0.stableId == completedSession.stableId
-                    }) {
-                        viewModel.showChat(for: currentSession)
                     }
                 }
             }
 
             // Schedule hiding the checkmark after 30 seconds
             DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [self] in
-                // Trigger a UI update to re-evaluate hasWaitingForInput
                 handleProcessingChange()
             }
         }
@@ -560,23 +558,6 @@ struct NotchView: View {
         previousWaitingForInputIds = currentIds
     }
 
-    /// Determine if notification sound should play for the given sessions
-    /// Returns true if ANY session is not actively focused
-    private func shouldPlayNotificationSound(for sessions: [SessionState]) async -> Bool {
-        for session in sessions {
-            guard let pid = session.pid else {
-                // No PID means we can't check focus, assume not focused
-                return true
-            }
-
-            let isFocused = await TerminalVisibilityDetector.isSessionFocused(sessionPid: pid)
-            if !isFocused {
-                return true
-            }
-        }
-
-        return false
-    }
 }
 
 // MARK: - Animated Ellipsis

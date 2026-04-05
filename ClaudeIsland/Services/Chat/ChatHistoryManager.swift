@@ -41,6 +41,14 @@ class ChatHistoryManager: ObservableObject {
         await SessionStore.shared.process(.loadHistory(sessionId: sessionId, cwd: cwd))
     }
 
+    /// Force a full reload of chat history from the JSONL file, bypassing cache
+    func forceReloadFromFile(sessionId: String, cwd: String) async {
+        await ConversationParser.shared.resetState(for: sessionId)
+        loadedSessions.remove(sessionId)
+        loadedSessions.insert(sessionId)
+        await SessionStore.shared.process(.loadHistory(sessionId: sessionId, cwd: cwd))
+    }
+
     func syncFromFile(sessionId: String, cwd: String) async {
         let messages = await ConversationParser.shared.parseFullConversation(
             sessionId: sessionId,

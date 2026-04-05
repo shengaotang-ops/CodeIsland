@@ -37,6 +37,12 @@ actor TerminalJumper {
         // 2. AppleScript strategies for specific terminals
         let lower = terminalApp.lowercased()
 
+        // "claude" as terminalApp means the Claude binary was the detected process
+        // (e.g., Claude Code extension in VS Code) — try VS Code/Cursor first
+        if lower == "claude" || lower.isEmpty {
+            if await jumpViaVSCode(cwd: cwd) { return true }
+        }
+
         if lower.contains("iterm") {
             if await jumpViaiTerm2(cwd: cwd, pid: pid) { return true }
         }
@@ -73,29 +79,41 @@ actor TerminalJumper {
             if await activateByBundleId("hyper") { return true }
         }
 
-        // 3. If terminal app unknown OR all specific strategies failed,
-        //    try common AppleScript terminals in order
-        if await jumpViaCmux(cwd: cwd, sessionId: session.sessionId) { return true }
-        if await jumpViaGhostty(cwd: cwd) { return true }
-        if await jumpViaiTerm2(cwd: cwd, pid: pid) { return true }
-        if await jumpViaTerminalApp(cwd: cwd, pid: pid) { return true }
+        // 3. If a known terminal was matched above but its strategy failed,
+        //    don't try other terminals — only fall through for truly unknown terminals
+        let knownTerminals = ["iterm", "terminal", "cmux", "ghostty", "kitty", "wezterm", "warp", "alacritty", "hyper"]
+        let isKnownTerminal = knownTerminals.contains { lower.contains($0) }
+
+        if !isKnownTerminal {
+            // Unknown terminal — try common AppleScript terminals in order
+            if await jumpViaCmux(cwd: cwd, sessionId: session.sessionId) { return true }
+            if await jumpViaGhostty(cwd: cwd) { return true }
+            if await jumpViaiTerm2(cwd: cwd, pid: pid) { return true }
+            if await jumpViaTerminalApp(cwd: cwd, pid: pid) { return true }
+        }
 
         // 4. Generic fallback: activate terminal app by bundle ID
         if !terminalApp.isEmpty {
             if await activateByBundleId(terminalApp) { return true }
         }
 
-        // 5. Last resort: activate any running terminal
-        for bundleId in ["com.cmuxterm.app", "com.mitchellh.ghostty", "dev.warp.Warp-Stable", "com.googlecode.iterm2", "com.apple.Terminal"] {
-            if activateRunningApp(bundleId: bundleId) { return true }
-        }
         return false
     }
 
     // MARK: - iTerm2 (AppleScript — rich API)
 
     private func jumpViaiTerm2(cwd: String, pid: Int?) async -> Bool {
+        // Try matching by TTY first (most reliable), then fall back to directory name
+        let ttyMatch = pid.flatMap { Self.ttyForPid($0) }
         let dirName = URL(fileURLWithPath: cwd).lastPathComponent
+
+        let matchCondition: String
+        if let tty = ttyMatch {
+            matchCondition = "tty of s is \"\(tty)\""
+        } else {
+            matchCondition = "name of s contains \"\(dirName)\""
+        }
+
         let script = """
         tell application "System Events"
             if not (exists process "iTerm2") then return false
@@ -105,7 +123,7 @@ actor TerminalJumper {
                 repeat with t in tabs of w
                     repeat with s in sessions of t
                         try
-                            if name of s contains "\(dirName)" then
+                            if \(matchCondition) then
                                 select t
                                 select s
                                 activate
@@ -120,6 +138,27 @@ actor TerminalJumper {
         end tell
         """
         return await runAppleScript(script)
+    }
+
+    /// Get the TTY device path for a given PID by walking up the process tree
+    private static func ttyForPid(_ pid: Int) -> String? {
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/bin/ps")
+        process.arguments = ["-p", String(pid), "-o", "tty="]
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0,
+                  let tty = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !tty.isEmpty, tty != "??" else { return nil }
+            return "/dev/" + tty
+        } catch {
+            return nil
+        }
     }
 
     // MARK: - Terminal.app (AppleScript)
@@ -242,6 +281,36 @@ actor TerminalJumper {
             }
         } catch {}
         return await activateByBundleId("wezterm")
+    }
+
+    // MARK: - VS Code / Cursor (System Events)
+
+    private func jumpViaVSCode(cwd: String) async -> Bool {
+        // Try VS Code, then Cursor
+        let editors: [(bundleId: String, cli: String)] = [
+            ("com.microsoft.VSCode", "/usr/local/bin/code"),
+            ("com.todesktop.230313mzl4w4u92", "/usr/local/bin/cursor"),
+        ]
+
+        for editor in editors {
+            let apps = NSRunningApplication.runningApplications(withBundleIdentifier: editor.bundleId)
+            guard !apps.isEmpty else { continue }
+
+            // Use the CLI to open the folder — this brings the correct window to front
+            if FileManager.default.isExecutableFile(atPath: editor.cli) {
+                do {
+                    _ = try await ProcessExecutor.shared.run(editor.cli, arguments: [cwd])
+                    return true
+                } catch {}
+            }
+
+            // Fallback: just activate the app
+            if let app = apps.first {
+                app.activate()
+                return true
+            }
+        }
+        return false
     }
 
     // MARK: - Generic Bundle ID Activation
