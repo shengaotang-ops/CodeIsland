@@ -28,9 +28,13 @@ struct BuddyPanelView: View {
             case .menu:
                 NotchMenuView(viewModel: viewModel.notchBridge)
             case .chat(let session):
+                // Use latest session state from monitor (stored state may be stale)
+                let currentSession = viewModel.sessionMonitor.instances.first(where: {
+                    $0.sessionId == session.sessionId
+                }) ?? session
                 ChatView(
                     sessionId: session.sessionId,
-                    initialSession: session,
+                    initialSession: currentSession,
                     sessionMonitor: viewModel.sessionMonitor,
                     viewModel: viewModel.notchBridge
                 )

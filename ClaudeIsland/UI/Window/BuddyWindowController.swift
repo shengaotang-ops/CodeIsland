@@ -53,6 +53,14 @@ class BuddyWindowController: NSWindowController {
             buddyPanel?.setFrameOrigin(pos)
         }
 
+        // Force buddy window redraw on glow state change
+        vm.$glowState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak buddyPanel] _ in
+                buddyPanel?.display()
+            }
+            .store(in: &cancellables)
+
         // Observe expand/collapse to show/hide panel window
         vm.$isExpanded
             .receive(on: DispatchQueue.main)
@@ -132,10 +140,11 @@ class BuddyWindowController: NSWindowController {
             DebugLogger.log("Buddy", "newlyWaiting=\(newlyWaiting.count) ids=\(newlyWaitingIds)")
 
             // Only popup for sessions that transitioned FROM processing/compacting
+            // Also treat first-seen sessions in waitingForInput as valid (after app relaunch,
+            // processing hooks have new=false so the session isn't tracked until Stop)
             let fromWorking = newlyWaiting.filter { session in
                 let prev = previousPhases[session.stableId]
-                DebugLogger.log("Buddy", "session=\(session.projectName) prevPhase=\(prev.map { "\($0)" } ?? "nil") curPhase=\(session.phase)")
-                guard let prev = prev else { return false }
+                if prev == nil { return true }
                 return prev == .processing || prev == .compacting
             }
 
@@ -149,15 +158,16 @@ class BuddyWindowController: NSWindowController {
                 return !isFront
             }
 
-            DebugLogger.log("Buddy", "fromWorking=\(fromWorking.count) recentJump=\(recentJump) unfocused=\(unfocused.count)")
-
-            if !recentJump && !unfocused.isEmpty {
-                let session = unfocused[0]
-
-                // Play notification sound
+            // Play sound for any session that finished working (regardless of focus)
+            if !fromWorking.isEmpty {
                 if let soundName = AppSettings.notificationSound.soundName {
                     NSSound(named: soundName)?.play()
                 }
+            }
+
+            // Auto-expand panel only for unfocused sessions
+            if !recentJump && !unfocused.isEmpty {
+                let session = unfocused[0]
 
                 // Auto-expand panel with that session's chat after a brief delay
                 Task { [weak self] in
@@ -176,7 +186,7 @@ class BuddyWindowController: NSWindowController {
                         $0.stableId == session.stableId
                     }) {
                         DebugLogger.log("Buddy", "Auto-popup for \(session.projectName)")
-                        self.viewModel.expand()
+                        self.viewModel.expandForNotification()
                         self.viewModel.showChat(for: current)
                     }
                 }
@@ -216,8 +226,9 @@ class BuddyWindowController: NSWindowController {
         let originX = buddyCenterX - panelSize.width / 2
         let originY = viewModel.position.y + buddySize + 8
 
-        // Clamp to screen bounds
-        let screen = NSScreen.main?.visibleFrame ?? .zero
+        // Find the screen containing the buddy
+        let buddyPoint = viewModel.position
+        let screen = (NSScreen.screens.first(where: { $0.frame.contains(buddyPoint) }) ?? NSScreen.main)?.visibleFrame ?? .zero
         let clampedX = max(screen.minX, min(originX, screen.maxX - panelSize.width))
         let clampedY = max(screen.minY, min(originY, screen.maxY - panelSize.height))
 
@@ -244,7 +255,12 @@ class BuddyWindowController: NSWindowController {
         panel.contentView = NSHostingView(rootView: panelView)
         panelWindow = panel
 
-        panel.makeKeyAndOrderFront(nil)
+        if viewModel.isAutoPopup {
+            // Auto-popup: show panel without stealing focus from the user's current app
+            panel.orderFrontRegardless()
+        } else {
+            panel.makeKeyAndOrderFront(nil)
+        }
     }
 
     private func hidePanelWindow() {

@@ -851,12 +851,13 @@ actor SessionStore {
             }
         }
 
-        // Transition to idle
-        if session.phase.canTransition(to: .idle) {
-            session.phase = .idle
+        // Transition to waitingForInput (cancel means Claude stopped, waiting for user)
+        if session.phase.canTransition(to: .waitingForInput) {
+            session.phase = .waitingForInput
         }
 
         sessions[sessionId] = session
+        publishState()
     }
 
     // MARK: - Clear Processing

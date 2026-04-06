@@ -41,11 +41,9 @@ struct BuddyFloatingView: View {
     @ViewBuilder
     private var buddyContent: some View {
         if let buddy = buddyReader.buddy {
-            BuddyASCIIView(buddy: buddy, showName: false)
+            BuddyASCIIView(buddy: buddy, showName: false, textColor: glowColor)
                 .fixedSize()
-                .brightness(0.3)
-                .colorMultiply(glowColor ?? buddy.rarity.color)
-                .shadow(color: (glowColor ?? .clear).opacity(0.5), radius: glowColor != nil ? 4 : 0)
+                .shadow(color: (glowColor ?? .clear).opacity(0.6), radius: glowColor != nil ? 6 : 0)
                 .scaleEffect(1.1)
         } else {
             Image(systemName: "person.circle.fill")

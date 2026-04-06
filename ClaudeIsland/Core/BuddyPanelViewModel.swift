@@ -156,10 +156,20 @@ class BuddyPanelViewModel: ObservableObject {
     /// Must be set synchronously (not via Combine sink) to beat the global event monitor.
     var lastExpandTime: Date = .distantPast
 
+    /// Whether the current expand was triggered by auto-popup (don't steal focus)
+    var isAutoPopup = false
+
     func expand() {
         lastExpandTime = Date()
+        isAutoPopup = false
         isExpanded = true
         contentType = .instances
+    }
+
+    func expandForNotification() {
+        lastExpandTime = Date()
+        isAutoPopup = true
+        isExpanded = true
     }
 
     func collapse() {
@@ -169,7 +179,9 @@ class BuddyPanelViewModel: ObservableObject {
     }
 
     func showChat(for session: SessionState) {
-        contentType = .chat(session)
+        // Always use the latest session state from the monitor
+        let latest = sessionMonitor.instances.first(where: { $0.sessionId == session.sessionId }) ?? session
+        contentType = .chat(latest)
         syncBridgeContentType()
     }
 
@@ -197,15 +209,21 @@ class BuddyPanelViewModel: ObservableObject {
 
     private func updateGlowState(from instances: [SessionState]) {
         let active = instances.filter { $0.phase != .ended }
+        let phases = active.map { "\($0.projectName):\($0.phase)" }.joined(separator: ", ")
+        let oldGlow = glowState
 
         if active.contains(where: { $0.phase.isWaitingForApproval }) {
             glowState = .needsApproval
-        } else if active.contains(where: { $0.phase == .waitingForInput }) {
-            glowState = .needsInput
         } else if active.contains(where: { $0.phase == .processing || $0.phase == .compacting }) {
             glowState = .processing
+        } else if active.contains(where: { $0.phase == .waitingForInput }) {
+            glowState = .needsInput
         } else {
             glowState = .idle
+        }
+
+        if glowState != oldGlow {
+            DebugLogger.log("Buddy", "glowState \(oldGlow) → \(glowState) phases=[\(phases)]")
         }
     }
 

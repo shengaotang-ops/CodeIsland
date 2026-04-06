@@ -12,7 +12,7 @@ import SwiftUI
 struct ChatView: View {
     let sessionId: String
     let initialSession: SessionState
-    let sessionMonitor: ClaudeSessionMonitor
+    @ObservedObject var sessionMonitor: ClaudeSessionMonitor
     @ObservedObject var viewModel: NotchViewModel
 
     @State private var inputText: String = ""
@@ -30,9 +30,10 @@ struct ChatView: View {
     init(sessionId: String, initialSession: SessionState, sessionMonitor: ClaudeSessionMonitor, viewModel: NotchViewModel) {
         self.sessionId = sessionId
         self.initialSession = initialSession
-        self.sessionMonitor = sessionMonitor
+        self._sessionMonitor = ObservedObject(wrappedValue: sessionMonitor)
         self._viewModel = ObservedObject(wrappedValue: viewModel)
         self._session = State(initialValue: initialSession)
+        self._isProcessing = State(initialValue: initialSession.phase == .processing || initialSession.phase == .compacting)
 
         // Initialize from cache if available (prevents loading flicker on view recreation)
         let cachedHistory = ChatHistoryManager.shared.history(for: sessionId)
@@ -152,6 +153,14 @@ struct ChatView: View {
             }
         }
         .onReceive(sessionMonitor.$instances) { sessions in
+            // Always update processing state from live data
+            if let live = sessions.first(where: { $0.sessionId == sessionId }) {
+                let liveProcessing = live.phase == .processing || live.phase == .compacting
+                if liveProcessing != isProcessing {
+                    isProcessing = liveProcessing
+                }
+            }
+
             if let updated = sessions.first(where: { $0.sessionId == sessionId }),
                updated != session {
                 // Check if permission was just accepted (transition from waitingForApproval to processing)
@@ -220,9 +229,7 @@ struct ChatView: View {
     }
 
     /// Whether the session is currently processing
-    private var isProcessing: Bool {
-        session.phase == .processing || session.phase == .compacting
-    }
+    @State private var isProcessing: Bool = false
 
     /// Get the last user message ID for stable text selection per turn
     private var lastUserMessageId: String {

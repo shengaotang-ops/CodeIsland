@@ -492,6 +492,9 @@ struct BuddyASCIIView: View {
     /// Whether to show the buddy name below the sprite (default true).
     var showName: Bool = true
 
+    /// Override text color. Nil = use buddy.rarity.color.
+    var textColor: Color? = nil
+
 
     @State private var tick: Int = 0
     @State private var petTick: Int = 0
@@ -512,7 +515,7 @@ struct BuddyASCIIView: View {
             ForEach(Array(renderedLines.enumerated()), id: \.offset) { _, line in
                 Text(line)
                     .font(.system(size: 10, design: .monospaced))
-                    .foregroundColor(buddy.rarity.color)
+                    .foregroundColor(textColor ?? buddy.rarity.color)
             }
 
             // Name below the sprite
