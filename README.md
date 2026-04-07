@@ -9,11 +9,11 @@
 This is a passion project built purely out of personal interest. It is **free and open-source** with no commercial intentions whatsoever. I welcome everyone to try it out, report bugs, share it with your colleagues, and contribute code. Let's build something great together!
 
 
-[![GitHub stars](https://img.shields.io/github/stars/xmqywx/CodeIsland?style=social)](https://github.com/xmqywx/CodeIsland/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/shengaotang-ops/CodeIsland?style=social)](https://github.com/shengaotang-ops/CodeIsland/stargazers)
 
-[![Website](https://img.shields.io/badge/website-xmqywx.github.io%2FCodeIsland-7c3aed?style=flat-square)](https://xmqywx.github.io/CodeIsland/)
-[![Release](https://img.shields.io/github/v/release/xmqywx/CodeIsland?style=flat-square&color=4ADE80)](https://github.com/xmqywx/CodeIsland/releases)
-[![macOS](https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple)](https://github.com/xmqywx/CodeIsland/releases)
+[![Website](https://img.shields.io/badge/website-shengaotang-ops.github.io%2FCodeIsland-7c3aed?style=flat-square)](https://xmqywx.github.io/CodeIsland/)
+[![Release](https://img.shields.io/github/v/release/shengaotang-ops/CodeIsland?style=flat-square&color=4ADE80)](https://github.com/shengaotang-ops/CodeIsland/releases)
+[![macOS](https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple)](https://github.com/shengaotang-ops/CodeIsland/releases)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-green?style=flat-square)](LICENSE.md)
 
 **If you find this useful, please give it a star! It keeps us motivated to improve.**
@@ -136,20 +136,10 @@ CodeIsland auto-detects your terminal from the process tree:
 | Cursor | Auto | Activate |
 | Zed | Auto | Activate |
 
-## Install
-
-**Download** the latest `.dmg` from [Releases](https://github.com/xmqywx/CodeIsland/releases), open it, drag to Applications.
-
-> **macOS Gatekeeper warning:** If you see "Code Island is damaged and can't be opened", run this in Terminal:
-> ```bash
-> xattr -cr /Applications/Code\ Island.app
-> ```
-> This removes the quarantine flag from the unsigned app.
-
-### Build from Source
+## Build from Source
 
 ```bash
-git clone https://github.com/xmqywx/CodeIsland.git
+git clone https://github.com/shengaotang-ops/CodeIsland.git
 cd CodeIsland
 xcodebuild -project ClaudeIsland.xcodeproj -scheme ClaudeIsland \
   -configuration Release CODE_SIGN_IDENTITY="-" \
