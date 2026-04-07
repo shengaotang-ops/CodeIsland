@@ -282,6 +282,13 @@ struct ClaudeInstancesView: View {
                 let duration = Date().timeIntervalSince(session.createdAt)
                 return duration > 30
             }
+            // Filter out idle sessions with no meaningful content (no user messages or summary)
+            if session.phase == .idle || session.phase == .ended {
+                let hasContent = session.conversationInfo.summary != nil
+                    || session.conversationInfo.firstUserMessage != nil
+                    || session.conversationInfo.latestUserMessage != nil
+                if !hasContent { return false }
+            }
             return true
         }
         .sorted { a, b in
