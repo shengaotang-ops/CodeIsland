@@ -4,13 +4,10 @@
 
 # CodeIsland
 
-**Your AI agents live in the notch.**
+**Your AI agents live in a floating buddy on your desktop.**
 
 This is a passion project built purely out of personal interest. It is **free and open-source** with no commercial intentions whatsoever. I welcome everyone to try it out, report bugs, share it with your colleagues, and contribute code. Let's build something great together!
 
-这是一个纯粹出于个人兴趣开发的项目，**完全免费开源**，没有任何商业目的。欢迎大家试用、提 Bug、推荐给身边的同事使用，也欢迎贡献代码。一起把它做得更好！
-
-English | [中文](README.zh-CN.md)
 
 [![GitHub stars](https://img.shields.io/github/stars/xmqywx/CodeIsland?style=social)](https://github.com/xmqywx/CodeIsland/stargazers)
 
@@ -21,43 +18,41 @@ English | [中文](README.zh-CN.md)
 
 **If you find this useful, please give it a star! It keeps us motivated to improve.**
 
-**如果觉得好用，请点个 Star 支持一下！这是我们持续更新的最大动力。**
 
 </div>
 
 ---
 
-A native macOS app that turns your MacBook's notch into a real-time control surface for AI coding agents. Monitor sessions, approve permissions, jump to terminals, and hang out with your Claude Code buddy — all without leaving your flow.
+A native macOS app that puts a floating buddy on your desktop as a real-time control surface for AI coding agents. Monitor sessions, approve permissions, jump to terminals, and hang out with your Claude Code buddy — all without leaving your flow.
 
 ## Features
 
-### Dynamic Island Notch
+### Floating Buddy
 
-The collapsed notch shows everything at a glance:
+A draggable buddy pet that lives on your desktop with a glowing ring that reflects session state:
 
-- **Animated buddy** — your Claude Code `/buddy` pet rendered as 16x16 pixel art with wave/dissolve/reassemble animation
-- **Status dot** — color indicates state:
+- **Animated buddy** — your Claude Code `/buddy` pet rendered as pixel art with idle animations
+- **Glow ring** — color indicates state:
   - 🟦 Cyan = working
   - 🟧 Amber = needs approval
   - 🟩 Green = done / waiting for input
-  - 🟣 Purple = thinking
-  - 🔴 Red = error, or session unattended >60s
-  - 🟠 Orange = session unattended >30s
-- **Project name + status** — carousel rotates task title, tool action, project name
-- **Session count** — `×3` badge showing active sessions
+  - 🔴 Red = error
+- **Click to expand** — opens a session panel right next to the buddy
+- **Draggable** — position anywhere on screen, position persists across launches
 - **Pixel Cat Mode** — toggle to show the hand-drawn pixel cat instead of your buddy
 
-### Session List
+### Session Panel
 
-Expand the notch to see all your Claude Code sessions:
+Click the buddy to see all your Claude Code sessions in a flat list:
 
 - **Pixel cat face** per session with state-specific expressions (blink, eye-dart, heart eyes on done, X eyes on error)
 - **Auto-detected terminal** — shows Ghostty, Warp, iTerm2, cmux, Terminal, VS Code, Cursor, etc.
 - **Task title** — displays your first message or Claude's summary, not just the folder name
 - **Duration badge** — how long each session has been running
-- **Golden jump button** — click to jump to the exact terminal tab (via cmux/Ghostty AppleScript)
-- **Glow dots** with gradient dividers — minimal, clean design
-- **Hover effects** — row highlight + golden terminal icon
+- **Terminal jump button** — click to jump to the exact terminal tab (via cmux/Ghostty AppleScript)
+- **Subagent tracking** — see active subagents nested under each session
+- **Inline approval** — approve or deny permission requests without switching windows
+- **Chat view** — open a chat panel for any session
 
 ### Claude Code Buddy Integration
 
@@ -109,23 +104,16 @@ Chiptune alerts for every event:
 
 Each sound can be toggled individually. Global mute and volume control available.
 
-### Project Grouping
-
-Toggle between flat list and project-grouped view:
-
-- Sessions automatically grouped by working directory
-- Collapsible project headers with active count
-- Chevron icons for expand/collapse
-
 ## Settings
 
 | Setting | Description |
 |---------|-------------|
 | **Screen** | Choose which display shows the notch (Auto, Built-in, or specific monitor) |
 | **Notification Sound** | Select alert sound style |
-| **Group by Project** | Toggle between flat list and project-grouped sessions |
-| **Pixel Cat Mode** | Switch notch icon between pixel cat and buddy emoji animation |
-| **Language** | Auto (system) / English / 中文 |
+| **Pixel Cat Mode** | Switch buddy icon between pixel cat and buddy emoji animation |
+| **Smart Suppression** | Suppress notifications for sessions you're actively watching |
+| **Auto Collapse** | Collapse panel when mouse leaves |
+| **Language** | Auto (system) / English / Chinese |
 | **Launch at Login** | Start CodeIsland automatically when you log in |
 | **Hooks** | Install/uninstall Claude Code hooks in `~/.claude/settings.json` |
 | **Accessibility** | Grant accessibility permission for terminal window focusing |
@@ -172,7 +160,6 @@ xcodebuild -project ClaudeIsland.xcodeproj -scheme ClaudeIsland \
 ### Requirements
 
 - macOS 14+ (Sonoma)
-- MacBook with notch (floating mode on external displays)
 - [Bun](https://bun.sh) for accurate buddy stats (optional, falls back to basic info)
 
 ## How It Works
@@ -183,47 +170,9 @@ xcodebuild -project ClaudeIsland.xcodeproj -scheme ClaudeIsland \
 4. **Buddy data** — reads `~/.claude.json` for name/personality, runs `buddy-bones.js` with Bun for accurate species/rarity/stats
 5. **Terminal jump** — uses AppleScript to find and focus the correct terminal tab by matching working directory
 
-## i18n
-
-CodeIsland supports English and Chinese with automatic system locale detection. Override in Settings > Language.
-
-## Contributing
-
-Contributions are welcome! Here's how:
-
-1. **Report bugs** — [Open an issue](https://github.com/xmqywx/CodeIsland/issues) with steps to reproduce
-2. **Submit a PR** — Fork the repo, create a branch, make your changes, and open a Pull Request
-3. **Suggest features** — Open an issue tagged `enhancement`
-
-I will personally review and merge all PRs. Please keep changes focused and include a clear description.
-
-## 参与贡献
-
-欢迎参与！方式如下：
-
-1. **提交 Bug** — 在 [Issues](https://github.com/xmqywx/CodeIsland/issues) 中描述问题和复现步骤
-2. **提交 PR** — Fork 本仓库，新建分支，修改后提交 Pull Request
-3. **建议功能** — 在 Issues 中提出，标记为 `enhancement`
-
-我会亲自 Review 并合并所有 PR。请保持改动聚焦，附上清晰的说明。
-
-## Contact / 联系方式
-
-Have questions or want to chat? Reach out!
-
-有问题或想交流？欢迎联系！
-
-- **Email / 邮箱**: xmqywx@gmail.com
-
-<img src="docs/wechat-qr-kris.jpg" width="180" alt="WeChat - Kris" />  <img src="docs/wechat-qr.jpg" width="180" alt="WeChat - Carey" />
-
 ## Credits
 
 Forked from [Claude Island](https://github.com/farouqaldori/claude-island) by farouqaldori. Rebuilt with pixel cat animations, buddy integration, cmux support, i18n, and minimal glow-dot design.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=xmqywx/CodeIsland&type=Date)](https://star-history.com/#xmqywx/CodeIsland&Date)
 
 ## License
 
