@@ -16,7 +16,6 @@ struct NotchMenuView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject private var screenSelector = ScreenSelector.shared
     @ObservedObject private var soundSelector = SoundSelector.shared
-    @AppStorage("showGroupedSessions") private var showGrouped: Bool = false
     @AppStorage("usePixelCat") private var usePixelCat: Bool = false
     @AppStorage("smartSuppression") private var smartSuppression: Bool = true
     @AppStorage("autoCollapseOnMouseLeave") private var autoCollapseOnMouseLeave: Bool = true
@@ -105,7 +104,6 @@ struct NotchMenuView: View {
                     // Toggle grid — 2 columns
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
                         compactToggle(icon: "cat", label: "Pixel Cat", isOn: usePixelCat) { usePixelCat.toggle() }
-                        compactToggle(icon: "folder", label: L10n.groupByProject, isOn: showGrouped) { showGrouped.toggle() }
                         compactToggle(icon: "eye.slash", label: L10n.smartSuppression, isOn: smartSuppression) { smartSuppression.toggle() }
                         compactToggle(icon: "rectangle.compress.vertical", label: L10n.autoCollapseOnMouseLeave, isOn: autoCollapseOnMouseLeave) { autoCollapseOnMouseLeave.toggle() }
                     }

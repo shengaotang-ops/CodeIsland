@@ -13,10 +13,6 @@ struct ClaudeInstancesView: View {
     @ObservedObject var sessionMonitor: ClaudeSessionMonitor
     @ObservedObject var viewModel: NotchViewModel
 
-    /// Tracks which project groups are collapsed, keyed by group id (cwd path)
-    @State private var collapsedGroups: Set<String> = []
-    /// Whether to show grouped by project or flat list (default: flat)
-    @AppStorage("showGroupedSessions") private var showGrouped: Bool = false
     @ObservedObject private var buddyReader = BuddyReader.shared
     @State private var showBuddyCard: Bool = false
     @AppStorage("usePixelCat") private var usePixelCat: Bool = false
@@ -51,8 +47,6 @@ struct ClaudeInstancesView: View {
 
                     if showBuddyCard, let buddy = buddyReader.buddy {
                         buddyCardView(buddy)
-                    } else if showGrouped {
-                        groupedList
                     } else {
                         flatList
                     }
@@ -314,11 +308,6 @@ struct ClaudeInstancesView: View {
         }
     }
 
-    /// Sessions grouped by project (cwd), with per-group sorting preserved
-    private var projectGroups: [ProjectGroup] {
-        ProjectGroup.group(sessions: sortedInstances)
-    }
-
     private var flatList: some View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVStack(spacing: 0) {
@@ -401,44 +390,6 @@ struct ClaudeInstancesView: View {
                 }
             }
             .padding(.horizontal, 2)
-            .padding(.vertical, 2)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-    }
-
-    private var groupedList: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: 4) {
-                ForEach(projectGroups) { group in
-                    ProjectGroupHeader(
-                        group: group,
-                        isCollapsed: collapsedGroups.contains(group.id)
-                    ) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            if collapsedGroups.contains(group.id) {
-                                collapsedGroups.remove(group.id)
-                            } else {
-                                collapsedGroups.insert(group.id)
-                            }
-                        }
-                    }
-
-                    if !collapsedGroups.contains(group.id) {
-                        ForEach(group.sessions) { session in
-                            InstanceRow(
-                                session: session,
-                                onFocus: { focusSession(session) },
-                                onChat: { openChat(session) },
-                                onArchive: { archiveSession(session) },
-                                onApprove: { approveSession(session) },
-                                onReject: { rejectSession(session) }
-                            )
-                            .id(session.stableId)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 4)
             .padding(.vertical, 2)
         }
         .scrollBounceBehavior(.basedOnSize)
@@ -1025,65 +976,6 @@ struct InstanceRow: View {
                     .lineLimit(1)
             }
         }
-    }
-}
-
-// MARK: - Project Group Header
-
-struct ProjectGroupHeader: View {
-    let group: ProjectGroup
-    let isCollapsed: Bool
-    let onToggle: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button {
-            onToggle()
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.4))
-                    .frame(width: 12)
-
-                Text(group.name)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
-
-                if group.activeCount > 0 {
-                    Text("\(group.activeCount) \(L10n.active)")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.1))
-                        )
-                } else if group.isArchivable {
-                    Text(L10n.archived)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.35))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.06))
-                        )
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isHovered ? Color.white.opacity(0.04) : Color.clear)
-            )
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
     }
 }
 
