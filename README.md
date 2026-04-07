@@ -11,8 +11,6 @@ This is a passion project built purely out of personal interest. It is **free an
 
 [![GitHub stars](https://img.shields.io/github/stars/shengaotang-ops/CodeIsland?style=social)](https://github.com/shengaotang-ops/CodeIsland/stargazers)
 
-[![Website](https://img.shields.io/badge/website-shengaotang-ops.github.io%2FCodeIsland-7c3aed?style=flat-square)](https://xmqywx.github.io/CodeIsland/)
-[![Release](https://img.shields.io/github/v/release/shengaotang-ops/CodeIsland?style=flat-square&color=4ADE80)](https://github.com/shengaotang-ops/CodeIsland/releases)
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?style=flat-square&logo=apple)](https://github.com/shengaotang-ops/CodeIsland/releases)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-green?style=flat-square)](LICENSE.md)
 
