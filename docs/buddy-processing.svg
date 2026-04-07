@@ -1,19 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="200" height="180" viewBox="0 0 200 180">
-  <rect width="200" height="180" rx="12" fill="#1a1a2e"/>
-  <!-- Green glow ring -->
-  <ellipse cx="100" cy="90" rx="60" ry="55" fill="none" stroke="#4ADE80" stroke-width="2" opacity="0.3"/>
-  <ellipse cx="100" cy="90" rx="58" ry="53" fill="none" stroke="#4ADE80" stroke-width="1" opacity="0.6"/>
-  <text font-family="monospace" font-size="11" fill="#4ADE80">
-    <tspan x="42" y="24">Processing</tspan>
-    <tspan x="38" y="38" font-size="9" fill="#4ADE80" opacity="0.6">(green glow)</tspan>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="150" viewBox="0 0 160 150">
+  <rect width="160" height="150" rx="12" fill="#1a1a2e"/>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#4ADE80">
+    <tspan x="36" y="20">Processing</tspan>
+    <tspan x="30" y="33" font-size="9" fill="#4ADE80" opacity="0.6">(green glow)</tspan>
   </text>
-  <text font-family="monospace" font-size="14" fill="#c0ffc0">
-    <tspan x="58" y="68">/\_/\</tspan>
-    <tspan x="50" y="86">( ·   · )</tspan>
-    <tspan x="50" y="104">(  ω  )</tspan>
-    <tspan x="50" y="122">(")_(")~</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="14" fill="#c0ffc0" xml:space="preserve">
+    <tspan x="40" y="58"> /\_/\</tspan>
+    <tspan x="40" y="74">( ·   ·)</tspan>
+    <tspan x="40" y="90">(  ω  )</tspan>
+    <tspan x="40" y="106">(")_(")~</tspan>
   </text>
-  <text font-family="monospace" font-size="9" fill="#4ADE80">
-    <tspan x="55" y="155">working...</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="9" fill="#4ADE80">
+    <tspan x="48" y="132">working...</tspan>
   </text>
 </svg>

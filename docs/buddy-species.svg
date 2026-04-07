@@ -1,67 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="160" viewBox="0 0 720 160">
-  <rect width="720" height="160" rx="12" fill="#1a1a2e"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="140" viewBox="0 0 720 140">
+  <rect width="720" height="140" rx="12" fill="#1a1a2e"/>
   <!-- Duck -->
-  <text font-family="monospace" font-size="11" fill="#FBBF24">
-    <tspan x="25" y="20">Duck</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#FBBF24">
+    <tspan x="30" y="18">Duck</tspan>
   </text>
-  <text font-family="monospace" font-size="13" fill="#e0c878">
-    <tspan x="15" y="52">    __</tspan>
-    <tspan x="15" y="70">  &lt;(· )___</tspan>
-    <tspan x="15" y="88">   (  ._&gt;</tspan>
-    <tspan x="15" y="106">    `--´</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="13" fill="#e0c878" xml:space="preserve">
+    <tspan x="15" y="42">   __</tspan>
+    <tspan x="15" y="58"> &lt;(· )___</tspan>
+    <tspan x="15" y="74">  (  ._&gt;</tspan>
+    <tspan x="15" y="90">   `--´</tspan>
   </text>
   <!-- Blob -->
-  <text font-family="monospace" font-size="11" fill="#60A5FA">
-    <tspan x="145" y="20">Blob</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#60A5FA">
+    <tspan x="148" y="18">Blob</tspan>
   </text>
-  <text font-family="monospace" font-size="13" fill="#88b8f8">
-    <tspan x="125" y="52">  .----.</tspan>
-    <tspan x="125" y="70"> ( ·  · )</tspan>
-    <tspan x="125" y="88"> (      )</tspan>
-    <tspan x="125" y="106">  `----´</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="13" fill="#88b8f8" xml:space="preserve">
+    <tspan x="125" y="42"> .----.</tspan>
+    <tspan x="125" y="58">( ·  · )</tspan>
+    <tspan x="125" y="74">(      )</tspan>
+    <tspan x="125" y="90"> `----´</tspan>
   </text>
   <!-- Ghost -->
-  <text font-family="monospace" font-size="11" fill="#C084FC">
-    <tspan x="260" y="20">Ghost</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#C084FC">
+    <tspan x="258" y="18">Ghost</tspan>
   </text>
-  <text font-family="monospace" font-size="13" fill="#c8a8f8">
-    <tspan x="240" y="52">  .----.</tspan>
-    <tspan x="240" y="70"> / ·  · \</tspan>
-    <tspan x="240" y="88"> |      |</tspan>
-    <tspan x="240" y="106"> ~`~``~`~</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="13" fill="#c8a8f8" xml:space="preserve">
+    <tspan x="240" y="42"> .----.</tspan>
+    <tspan x="240" y="58">/ ·  · \</tspan>
+    <tspan x="240" y="74">|      |</tspan>
+    <tspan x="240" y="90">~`~``~`~</tspan>
   </text>
   <!-- Dragon -->
-  <text font-family="monospace" font-size="11" fill="#F87171">
-    <tspan x="370" y="20">Dragon</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#F87171">
+    <tspan x="370" y="18">Dragon</tspan>
   </text>
-  <text font-family="monospace" font-size="13" fill="#f8a8a8">
-    <tspan x="350" y="52"> /^\  /^\</tspan>
-    <tspan x="350" y="70">&lt;  ·  ·  &gt;</tspan>
-    <tspan x="350" y="88">(   ~~   )</tspan>
-    <tspan x="350" y="106"> `-vvvv-´</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="13" fill="#f8a8a8" xml:space="preserve">
+    <tspan x="355" y="42">/^\  /^\</tspan>
+    <tspan x="348" y="58">&lt;  ·  ·  &gt;</tspan>
+    <tspan x="351" y="74">(   ~~   )</tspan>
+    <tspan x="354" y="90"> `-vvvv-´</tspan>
   </text>
   <!-- Cat -->
-  <text font-family="monospace" font-size="11" fill="#4ADE80">
-    <tspan x="495" y="20">Cat</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#4ADE80">
+    <tspan x="495" y="18">Cat</tspan>
   </text>
-  <text font-family="monospace" font-size="13" fill="#a8f8b8">
-    <tspan x="475" y="52">  /\_/\</tspan>
-    <tspan x="475" y="70"> ( ·   · )</tspan>
-    <tspan x="475" y="88"> (  ω  )</tspan>
-    <tspan x="475" y="106"> (")_(")</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="13" fill="#a8f8b8" xml:space="preserve">
+    <tspan x="475" y="42"> /\_/\</tspan>
+    <tspan x="475" y="58">( ·   ·)</tspan>
+    <tspan x="475" y="74">(  ω  )</tspan>
+    <tspan x="475" y="90">(")_(")</tspan>
   </text>
   <!-- Robot -->
-  <text font-family="monospace" font-size="11" fill="#38BDF8">
-    <tspan x="610" y="20">Robot</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="11" fill="#38BDF8">
+    <tspan x="605" y="18">Robot</tspan>
   </text>
-  <text font-family="monospace" font-size="13" fill="#88d8f8">
-    <tspan x="595" y="52">  .[||].</tspan>
-    <tspan x="595" y="70"> [ ·  · ]</tspan>
-    <tspan x="595" y="88"> [ ==== ]</tspan>
-    <tspan x="595" y="106">  `----´</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="13" fill="#88d8f8" xml:space="preserve">
+    <tspan x="590" y="42"> .[||].</tspan>
+    <tspan x="590" y="58">[ ·  · ]</tspan>
+    <tspan x="590" y="74">[ ==== ]</tspan>
+    <tspan x="590" y="90"> `----´</tspan>
   </text>
   <!-- Footer -->
-  <text font-family="monospace" font-size="10" fill="#555555">
-    <tspan x="220" y="145">+ 12 more species: goose, owl, penguin, turtle, snail, axolotl, capybara, cactus, rabbit, mushroom, chonk, octopus</tspan>
+  <text font-family="'Courier New', Courier, monospace" font-size="9" fill="#555555">
+    <tspan x="140" y="125">+ 12 more: goose, owl, penguin, turtle, snail, axolotl, capybara, cactus, rabbit, mushroom, chonk, octopus</tspan>
   </text>
 </svg>
