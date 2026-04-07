@@ -145,7 +145,17 @@ CodeIsland auto-detects your terminal from the process tree:
 | Cursor | Auto | Activate |
 | Zed | Auto | Activate |
 
-## Build from Source
+## Install
+
+**Download** the latest `.dmg` from [Releases](https://github.com/shengaotang-ops/CodeIsland/releases), open it, drag to Applications.
+
+> **macOS Gatekeeper warning:** Since the app is not signed with an Apple Developer ID, macOS will block it. After downloading, run this in Terminal:
+> ```bash
+> xattr -cr /Applications/Code\ Island.app
+> ```
+> This removes the quarantine flag. You only need to do this once.
+
+### Build from Source
 
 ```bash
 git clone https://github.com/shengaotang-ops/CodeIsland.git
