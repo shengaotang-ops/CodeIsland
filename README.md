@@ -37,30 +37,18 @@ A draggable buddy pet that lives on your desktop with a glowing ring that reflec
 
 #### Buddy States
 
-```
-  Idle                Processing           Needs Input          Needs Approval
-  (no glow)           (green glow)         (amber pulse)        (red pulse)
+<p>
+  <img src="docs/buddy-idle.svg" width="160" alt="Idle" />
+  <img src="docs/buddy-processing.svg" width="160" alt="Processing" />
+  <img src="docs/buddy-needs-input.svg" width="160" alt="Needs Input" />
+  <img src="docs/buddy-needs-approval.svg" width="160" alt="Needs Approval" />
+</p>
 
-   /\_/\               /\_/\                /\_/\                /\_/\
-  ( ·   ·)            ( ·   ·)             ( ·   ·)             ( ·   ·)
-  (  ω  )             (  ω  )              (  ω  )              (  ω  )
-  (")_(")             (")_(")~             (")_(")              (")_(")
+#### 18 Species
 
-                      ╭─────────╮          ╭─────────╮          ╭─────────╮
-                      │ 3 active│          │ ? input │          │ ! allow │
-                      ╰─────────╯          ╰─────────╯          ╰─────────╯
-```
-
-18 species supported — each with 3 animation frames:
-
-```
-   Duck        Blob       Ghost      Dragon      Penguin     Octopus
-
-    __        .----.      .----.    /^\  /^\     .---.       .----.
-  <(· )___   ( ·  · )   / ·  · \  <  ·  ·  >   (·>·)      ( ·  · )
-   (  ._>    (      )   |      |  (   ~~   )  /(   )\     (______)
-    `--´      `----´    ~`~``~`~   `-vvvv-´    `---´      /\/\/\/\
-```
+<p>
+  <img src="docs/buddy-species.svg" width="680" alt="Buddy Species" />
+</p>
 
 ### Session Panel
 
