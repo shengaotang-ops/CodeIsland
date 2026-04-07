@@ -29,15 +29,38 @@ A native macOS app that puts a floating buddy on your desktop as a real-time con
 
 A draggable buddy pet that lives on your desktop with a glowing ring that reflects session state:
 
-- **Animated buddy** — your Claude Code `/buddy` pet rendered as pixel art with idle animations
-- **Glow ring** — color indicates state:
-  - 🟦 Cyan = working
-  - 🟧 Amber = needs approval
-  - 🟩 Green = done / waiting for input
-  - 🔴 Red = error
+- **Animated buddy** — your Claude Code `/buddy` pet rendered as ASCII art with idle animations
+- **Glow ring** — color ring around the buddy pulses based on session state
 - **Click to expand** — opens a session panel right next to the buddy
 - **Draggable** — position anywhere on screen, position persists across launches
 - **Pixel Cat Mode** — toggle to show the hand-drawn pixel cat instead of your buddy
+
+#### Buddy States
+
+```
+  Idle                Processing           Needs Input          Needs Approval
+  (no glow)           (green glow)         (amber pulse)        (red pulse)
+
+   /\_/\               /\_/\                /\_/\                /\_/\
+  ( ·   ·)            ( ·   ·)             ( ·   ·)             ( ·   ·)
+  (  ω  )             (  ω  )              (  ω  )              (  ω  )
+  (")_(")             (")_(")~             (")_(")              (")_(")
+
+                      ╭─────────╮          ╭─────────╮          ╭─────────╮
+                      │ 3 active│          │ ? input │          │ ! allow │
+                      ╰─────────╯          ╰─────────╯          ╰─────────╯
+```
+
+18 species supported — each with 3 animation frames:
+
+```
+   Duck        Blob       Ghost      Dragon      Penguin     Octopus
+
+    __        .----.      .----.    /^\  /^\     .---.       .----.
+  <(· )___   ( ·  · )   / ·  · \  <  ·  ·  >   (·>·)      ( ·  · )
+   (  ._>    (      )   |      |  (   ~~   )  /(   )\     (______)
+    `--´      `----´    ~`~``~`~   `-vvvv-´    `---´      /\/\/\/\
+```
 
 ### Session Panel
 
