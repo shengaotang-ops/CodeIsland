@@ -76,11 +76,11 @@ Full integration with Claude Code's `/buddy` companion system:
 
 ### Permission Approval
 
-Approve or deny Claude Code's permission requests right from the notch:
+Approve or deny Claude Code's permission requests from the buddy panel:
 
-- **Code diff preview** — see exactly what will change before allowing (green/red line highlighting)
-- **File path display** — warning icon + tool name + file being modified
-- **Deny/Allow buttons** — with keyboard hint labels
+- **Inline approve/deny** — buttons appear directly in the session row when a tool needs permission
+- **Tool info display** — shows the tool name and pending input so you know what's being requested
+- **Code diff preview** — open the chat panel to see exactly what will change (green/red line highlighting)
 - **Hook-based protocol** — responses sent via Unix socket, no terminal switching needed
 
 ### Pixel Cat Companion
@@ -117,7 +117,7 @@ Each sound can be toggled individually. Global mute and volume control available
 
 | Setting | Description |
 |---------|-------------|
-| **Screen** | Choose which display shows the notch (Auto, Built-in, or specific monitor) |
+| **Screen** | Choose which display shows the buddy (Auto, Built-in, or specific monitor) |
 | **Notification Sound** | Select alert sound style |
 | **Pixel Cat Mode** | Switch buddy icon between pixel cat and buddy emoji animation |
 | **Smart Suppression** | Suppress notifications for sessions you're actively watching |
