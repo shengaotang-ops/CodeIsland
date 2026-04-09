@@ -140,11 +140,8 @@ class BuddyWindowController: NSWindowController {
             DebugLogger.log("Buddy", "newlyWaiting=\(newlyWaiting.count) ids=\(newlyWaitingIds)")
 
             // Only popup for sessions that transitioned FROM processing/compacting
-            // Also treat first-seen sessions in waitingForInput as valid (after app relaunch,
-            // processing hooks have new=false so the session isn't tracked until Stop)
             let fromWorking = newlyWaiting.filter { session in
-                let prev = previousPhases[session.stableId]
-                if prev == nil { return true }
+                guard let prev = previousPhases[session.stableId] else { return false }
                 return prev == .processing || prev == .compacting
             }
 

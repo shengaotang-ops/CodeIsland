@@ -79,7 +79,10 @@ struct ProcessTreeBuilder: Sendable {
         while current > 1 && depth < 20 {
             guard let info = tree[current] else { break }
 
-            if TerminalAppRegistry.isTerminal(info.command) {
+            // Check the filename only, not the full path — paths like
+            // .vscode/extensions/... contain "code" which false-matches VS Code
+            let name = URL(fileURLWithPath: info.command).lastPathComponent
+            if TerminalAppRegistry.isTerminal(name) {
                 return current
             }
 

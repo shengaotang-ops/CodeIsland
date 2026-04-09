@@ -74,11 +74,16 @@ struct TerminalVisibilityDetector {
             return isTerminalAppSessionActive(dirName: dirName)
         }
 
-        // VS Code / Cursor: check if frontmost window title contains project dir
+        // VS Code / Cursor: if the session runs in this app and it's frontmost, treat as focused.
+        // The AppleScript window-title check requires accessibility permissions which the app
+        // may not have, causing it to silently return false. Only fall back to AppleScript when
+        // the session is in a different terminal (best-effort cross-app check).
         if bundleId == "com.microsoft.VSCode" || bundleId == "com.microsoft.VSCodeInsiders" {
+            if termApp.contains("vs code") { return true }
             return isVSCodeSessionActive(processName: "Code", dirName: dirName)
         }
         if bundleId == "com.todesktop.230313mzl4w4u92" {
+            if termApp.contains("cursor") { return true }
             return isVSCodeSessionActive(processName: "Cursor", dirName: dirName)
         }
 

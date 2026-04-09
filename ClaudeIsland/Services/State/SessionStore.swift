@@ -126,6 +126,14 @@ actor SessionStore {
         let sessionId = event.sessionId
         let isNewSession = sessions[sessionId] == nil
         DebugLogger.log("Hook", "\(event.event) status=\(event.status) sid=\(sessionId.prefix(8)) new=\(isNewSession)")
+
+        // Don't create new session entries for sessions we've never seen —
+        // these are stale ends from previous app launches that would just
+        // accumulate as ghost entries in the session list
+        if isNewSession && event.status == "ended" {
+            return
+        }
+
         var session = sessions[sessionId] ?? createSession(from: event)
 
         session.pid = event.pid
@@ -1005,6 +1013,15 @@ actor SessionStore {
     // MARK: - State Publishing
 
     private func publishState() {
+        // Auto-remove sessions that have been ended for more than 60 seconds
+        let staleThreshold: TimeInterval = 60
+        let now = Date()
+        for (id, session) in sessions where session.phase == .ended {
+            if now.timeIntervalSince(session.lastActivity) > staleThreshold {
+                sessions.removeValue(forKey: id)
+            }
+        }
+
         let sortedSessions = Array(sessions.values).sorted { $0.projectName < $1.projectName }
         sessionsSubject.send(sortedSessions)
     }
