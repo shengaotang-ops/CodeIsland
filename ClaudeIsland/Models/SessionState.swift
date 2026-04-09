@@ -24,6 +24,8 @@ struct SessionState: Equatable, Identifiable, Sendable {
     var isInTmux: Bool
     /// Detected terminal app name (e.g., "Ghostty", "Warp", "iTerm2", "cmux", "Terminal")
     var terminalApp: String?
+    /// How the session was launched (e.g., "cli", "vscode", "pikabot", "sdk")
+    var entrypoint: String?
 
     // MARK: - State Machine
 
@@ -74,6 +76,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         tty: String? = nil,
         isInTmux: Bool = false,
         terminalApp: String? = nil,
+        entrypoint: String? = nil,
         phase: SessionPhase = .idle,
         chatItems: [ChatHistoryItem] = [],
         toolTracker: ToolTracker = ToolTracker(),
@@ -93,6 +96,7 @@ struct SessionState: Equatable, Identifiable, Sendable {
         self.tty = tty
         self.isInTmux = isInTmux
         self.terminalApp = terminalApp
+        self.entrypoint = entrypoint
         self.phase = phase
         self.chatItems = chatItems
         self.toolTracker = toolTracker

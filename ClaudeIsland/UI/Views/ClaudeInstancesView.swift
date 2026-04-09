@@ -482,9 +482,13 @@ struct InstanceRow: View {
         return Color.white.opacity(0.4)
     }
 
-    /// Terminal app name — auto-detected from process tree
+    /// Terminal app name — auto-detected from process tree, with entrypoint suffix
     private var terminalTag: String {
-        session.terminalApp ?? (session.isInTmux ? "tmux" : "term")
+        let app = session.terminalApp ?? (session.isInTmux ? "tmux" : "term")
+        if let entry = session.entrypoint, entry != "cli" {
+            return "\(app)/\(entry)"
+        }
+        return app
     }
 
     /// Accent color based on phase (used for status dot)

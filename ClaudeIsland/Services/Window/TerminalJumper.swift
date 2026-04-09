@@ -27,7 +27,13 @@ actor TerminalJumper {
         let cwd = session.cwd
         let pid = session.pid
         let terminalApp = session.terminalApp ?? ""
-        DebugLogger.log("Jump", "termApp=\(terminalApp) cwd=\(cwd) sid=\(session.sessionId.prefix(8))")
+        DebugLogger.log("Jump", "termApp=\(terminalApp) entry=\(session.entrypoint ?? "nil") cwd=\(cwd) sid=\(session.sessionId.prefix(8))")
+
+        // Pikabot/SDK sessions run via web app — jump to Safari localhost tab
+        if let entry = session.entrypoint,
+           entry.contains("sdk") || entry.contains("pikabot") {
+            return await jumpToSafariLocalhost()
+        }
 
         // 1. Tmux + Yabai (most precise for tmux sessions)
         if session.isInTmux {
@@ -44,9 +50,7 @@ actor TerminalJumper {
         // 2. AppleScript strategies for specific terminals
         let lower = terminalApp.lowercased()
 
-        // "claude" as terminalApp means the Claude binary was the detected process
-        // (e.g., Claude Code extension in VS Code) — try VS Code/Cursor first
-        if lower == "claude" || lower.isEmpty {
+        if lower.contains("vs code") || lower.contains("cursor") {
             if await jumpViaVSCode(cwd: cwd) { return true }
         }
 
@@ -88,15 +92,17 @@ actor TerminalJumper {
 
         // 3. If a known terminal was matched above but its strategy failed,
         //    don't try other terminals — only fall through for truly unknown terminals
-        let knownTerminals = ["iterm", "terminal", "cmux", "ghostty", "kitty", "wezterm", "warp", "alacritty", "hyper"]
+        let knownTerminals = ["iterm", "terminal", "cmux", "ghostty", "kitty", "wezterm", "warp",
+                              "alacritty", "hyper", "vs code", "cursor"]
         let isKnownTerminal = knownTerminals.contains { lower.contains($0) }
 
         if !isKnownTerminal {
-            // Unknown terminal — try common AppleScript terminals in order
+            // Unknown terminal — try actual terminals first, VS Code/Cursor last
             if await jumpViaCmux(cwd: cwd, sessionId: session.sessionId) { return true }
             if await jumpViaGhostty(cwd: cwd) { return true }
             if await jumpViaiTerm2(cwd: cwd, pid: pid) { return true }
             if await jumpViaTerminalApp(cwd: cwd, pid: pid) { return true }
+            if await jumpViaVSCode(cwd: cwd) { return true }
         }
 
         // 4. Generic fallback: activate terminal app by bundle ID
@@ -140,8 +146,7 @@ actor TerminalJumper {
                     end repeat
                 end repeat
             end repeat
-            activate
-            return true
+            return false
         end tell
         """
         return await runAppleScript(script)
@@ -189,8 +194,7 @@ actor TerminalJumper {
                     end try
                 end repeat
             end repeat
-            activate
-            return true
+            return false
         end tell
         """
         return await runAppleScript(script)
@@ -227,8 +231,7 @@ actor TerminalJumper {
         } catch {}
 
         DebugLogger.log("Jump", "cmux no match for '\(dirName)'")
-        await bringCmuxToFront()
-        return true
+        return false
     }
 
     // MARK: - Ghostty (AppleScript)
@@ -293,17 +296,38 @@ actor TerminalJumper {
     // MARK: - VS Code / Cursor (System Events)
 
     private func jumpViaVSCode(cwd: String) async -> Bool {
+        let dirName = URL(fileURLWithPath: cwd).lastPathComponent
+
         // Try VS Code, then Cursor
-        let editors: [(bundleId: String, cli: String)] = [
-            ("com.microsoft.VSCode", "/usr/local/bin/code"),
-            ("com.todesktop.230313mzl4w4u92", "/usr/local/bin/cursor"),
+        let editors: [(bundleId: String, processName: String, cli: String)] = [
+            ("com.microsoft.VSCode", "Code", "/usr/local/bin/code"),
+            ("com.todesktop.230313mzl4w4u92", "Cursor", "/usr/local/bin/cursor"),
         ]
 
         for editor in editors {
             let apps = NSRunningApplication.runningApplications(withBundleIdentifier: editor.bundleId)
             guard !apps.isEmpty else { continue }
 
-            // Use the CLI to open the folder — this brings the correct window to front
+            // AppleScript: find the window whose title contains the project dir and raise it
+            let script = """
+            tell application "System Events"
+                tell process "\(editor.processName)"
+                    try
+                        repeat with w in windows
+                            if name of w contains "\(dirName)" then
+                                perform action "AXRaise" of w
+                                set frontmost to true
+                                return true
+                            end if
+                        end repeat
+                    end try
+                end tell
+            end tell
+            return false
+            """
+            if await runAppleScript(script) { return true }
+
+            // Fallback: use CLI to open the folder
             if FileManager.default.isExecutableFile(atPath: editor.cli) {
                 do {
                     _ = try await ProcessExecutor.shared.run(editor.cli, arguments: [cwd])
@@ -311,7 +335,7 @@ actor TerminalJumper {
                 } catch {}
             }
 
-            // Fallback: just activate the app
+            // Last resort: just activate the app
             if let app = apps.first {
                 app.activate()
                 return true
@@ -344,6 +368,52 @@ actor TerminalJumper {
             }
         }
         return false
+    }
+
+    // MARK: - Safari (for pikabot/web-based sessions)
+
+    private func jumpToSafariLocalhost() async -> Bool {
+        // Try Safari Web App (standalone PWA) first — look for "pika" or "localhost" in window title
+        let webAppScript = """
+        tell application "System Events"
+            repeat with p in every process
+                try
+                    if name of p contains "pika" or name of p contains "Web App" then
+                        set bundleId to bundle identifier of p
+                        if bundleId contains "Safari.WebApp" then
+                            set frontmost of p to true
+                            return true
+                        end if
+                    end if
+                end try
+            end repeat
+            return false
+        end tell
+        """
+        if await runAppleScript(webAppScript) { return true }
+
+        // Fallback: try regular Safari
+        let safariScript = """
+        tell application "System Events"
+            if not (exists process "Safari") then return false
+        end tell
+        tell application "Safari"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    try
+                        if URL of t contains "localhost" then
+                            set current tab of w to t
+                            set index of w to 1
+                            activate
+                            return true
+                        end if
+                    end try
+                end repeat
+            end repeat
+            return false
+        end tell
+        """
+        return await runAppleScript(safariScript)
     }
 
     @discardableResult

@@ -147,8 +147,12 @@ actor SessionStore {
                 let command = URL(fileURLWithPath: termInfo.command).lastPathComponent
                 session.terminalApp = TerminalAppRegistry.displayName(for: command)
             }
+            // Detect entrypoint from session file or process command
+            if session.entrypoint == nil {
+                session.entrypoint = Self.detectEntrypoint(pid: pid, sessionId: sessionId, tree: tree)
+            }
             if isNewSession {
-                DebugLogger.log("Hook", "pid=\(pid) tmux=\(session.isInTmux) termApp=\(session.terminalApp ?? "nil")")
+                DebugLogger.log("Hook", "pid=\(pid) tmux=\(session.isInTmux) termApp=\(session.terminalApp ?? "nil") entry=\(session.entrypoint ?? "nil")")
             }
         }
         if let tty = event.tty {
@@ -216,6 +220,38 @@ actor SessionStore {
             isInTmux: false,  // Will be updated
             phase: .idle
         )
+    }
+
+    /// Detect how a session was launched: "cli", "vscode", "pikabot", "sdk", or nil
+    private static func detectEntrypoint(pid: Int, sessionId: String, tree: [Int: ProcessInfo]) -> String? {
+        // 1. Try reading the session file (~/.claude/sessions/{pid}.json)
+        let sessionFile = NSHomeDirectory() + "/.claude/sessions/\(pid).json"
+        if let data = FileManager.default.contents(atPath: sessionFile),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let entrypoint = json["entrypoint"] as? String {
+            if entrypoint == "cli" { return "cli" }
+            if entrypoint.contains("vscode") { return "vscode" }
+            if entrypoint.contains("sdk") { return "sdk" }
+            return entrypoint
+        }
+
+        // 2. Walk the process tree for clues
+        var current = pid
+        var depth = 0
+        while current > 1 && depth < 20 {
+            guard let info = tree[current] else { break }
+            let cmd = info.command.lowercased()
+            if cmd.contains("claude_agent_sdk") || cmd.contains("claude-agent-sdk") {
+                return "pikabot"
+            }
+            if cmd.contains("sdk") && cmd.contains("claude") {
+                return "sdk"
+            }
+            current = info.ppid
+            depth += 1
+        }
+
+        return nil
     }
 
     private func processToolTracking(event: HookEvent, session: inout SessionState) {
