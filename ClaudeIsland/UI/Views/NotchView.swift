@@ -517,6 +517,27 @@ struct NotchView: View {
         if !newWaitingIds.isEmpty {
             let newlyWaitingSessions = waitingForInputSessions.filter { newWaitingIds.contains($0.stableId) }
 
+            // Only notify for sessions that transitioned FROM processing/compacting
+            // (skip first-seen sessions with no previous phase — they haven't done any work yet)
+            let sessionsFromWorkingState = newlyWaitingSessions.filter { session in
+                guard let prevPhase = previousPhases[session.stableId] else { return false }
+                return prevPhase == .processing || prevPhase == .compacting
+            }
+
+            guard !sessionsFromWorkingState.isEmpty else {
+                DebugLogger.log("Suppress", "[waitingForInput] Suppressed — no sessions from working state")
+                previousWaitingForInputIds = currentIds
+                // Still update phases below
+                for instance in instances {
+                    previousPhases[instance.stableId] = instance.phase
+                }
+                let currentStableIds = Set(instances.map { $0.stableId })
+                for key in previousPhases.keys where !currentStableIds.contains(key) {
+                    previousPhases.removeValue(forKey: key)
+                }
+                return
+            }
+
             // Suppress briefly after a jump to avoid double popup
             let recentJump = Date().timeIntervalSince(TerminalJumper.lastJumpTime) < 3.0
             if recentJump {
@@ -524,7 +545,7 @@ struct NotchView: View {
             }
 
             // Check focus per-session — only suppress for sessions the user is actively looking at
-            let unfocusedSessions = newlyWaitingSessions.filter { session in
+            let unfocusedSessions = sessionsFromWorkingState.filter { session in
                 let isFront = TerminalVisibilityDetector.isSessionTerminalFrontmost(session)
                 DebugLogger.log("Suppress", "[waitingForInput] session=\(session.projectName) isFront=\(isFront) termApp=\(session.terminalApp ?? "nil")")
                 return !isFront
@@ -546,13 +567,7 @@ struct NotchView: View {
                     }
                 }
 
-                // Auto-popup: if an unfocused session transitioned FROM processing/compacting TO waitingForInput,
-                // expand the notch and show that session's chat after a 1-second delay
-                let sessionsFromWorkingState = newlyWaitingSessions.filter { session in
-                    guard let prevPhase = previousPhases[session.stableId] else { return false }
-                    return prevPhase == .processing || prevPhase == .compacting
-                }
-
+                // Auto-popup: expand the notch and show that session's chat after a 1-second delay
                 if !sessionsFromWorkingState.isEmpty {
                     let completedSession = sessionsFromWorkingState[0]
                     Task { [self] in
